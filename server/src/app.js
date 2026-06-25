@@ -5,7 +5,7 @@ const env = require("./config/env");
 const healthRoutes = require("./routes/health.routes");
 const authRoutes = require("./routes/auth.routes");
 const roomRoutes = require("./routes/room.routes");
-const errorHandler = require("./middleware/middleware");
+const { errorHandler } = require("./middleware/middleware");
 
 function createApp() {
   const app = express();
@@ -21,9 +21,8 @@ function createApp() {
 
   app.use("/health", healthRoutes);
   app.use("/api/auth", authRoutes);
-//   app.use("/api/rooms", roomRoutes);
 
-//   app.use(errorHandler);
+  app.use(errorHandler);
 
   return app;
 }

@@ -15,7 +15,7 @@ const io = new Server(server, {
   },
 });
 
-// registerSocketServer(io);
+registerSocketServer(io);
 
 server.listen(env.port, () => {
   console.log(`HTTP + Socket server listening on port ${env.port}`);
