@@ -54,6 +54,31 @@ function getRoomById(roomId) {
   return sanitizeRoom(room);
 }
 
+async function verifyRoomAccess({ roomId, password }) {
+  if (!roomId) {
+    throw createAppError(400, "Room ID is required");
+  }
+
+  const room = roomsStore.findRoomById(roomId);
+  if (!room) {
+    throw createAppError(404, "Room not found");
+  }
+
+  // If room has a password, require correct password
+  if (room.passwordHash) {
+    if (!password) {
+      throw createAppError(401, "Room password is required");
+    }
+
+    const isValid = await bcrypt.compare(password, room.passwordHash);
+    if (!isValid) {
+      throw createAppError(401, "Invalid room password");
+    }
+  }
+
+  return room;
+}
+
 function sanitizeRoom(room) {
   return {
     id: room.id,

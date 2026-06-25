@@ -25,8 +25,24 @@ function getOrCreateWhiteboard(roomId) {
   return getWhiteboard(roomId) || createWhiteboard(roomId);
 }
 
+function addObjectToWhiteboard(roomId, object) {
+  const whiteboard = getOrCreateWhiteboard(roomId);
+  whiteboard.objects.push(object);
+  return whiteboard;
+}
+
+function getWhiteboardState(roomId) {
+  const whiteboard = getOrCreateWhiteboard(roomId);
+  return {
+    roomId: whiteboard.roomId,
+    objects: [...whiteboard.objects],
+  };
+}
+
 module.exports = {
   getWhiteboard,
   createWhiteboard,
   getOrCreateWhiteboard,
+  addObjectToWhiteboard,
+  getWhiteboardState,
 };
