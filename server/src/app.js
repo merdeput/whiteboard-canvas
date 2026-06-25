@@ -21,7 +21,7 @@ function createApp() {
 
   app.use("/health", healthRoutes);
   app.use("/api/auth", authRoutes);
-
+  app.use("/api/rooms", roomRoutes);
   app.use(errorHandler);
 
   return app;
