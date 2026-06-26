@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
+
+import "../styles/RegisterPage.css"
+
 import { register } from "../api/auth.api";
 
 function RegisterPage() {
@@ -31,37 +34,39 @@ function RegisterPage() {
   }
 
   return (
-    <div>
-      <h1>Register</h1>
+    <div className="register-container">
+      <div className="register-card">
+        <h1>Register</h1>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Username"
-          value={username}
-          onChange={(e) =>
-            setUsername(e.target.value)
-          }
-        />
+        <form onSubmit={handleSubmit}>
+          <input
+            placeholder="Username"
+            value={username}
+            onChange={(e) =>
+              setUsername(e.target.value)
+            }
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
-        />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
+          />
 
-        <button type="submit">
-          Register
-        </button>
-      </form>
+          <button type="submit">
+            Register
+          </button>
+        </form>
 
-      {error && <p>{error}</p>}
+        {error && <p>{error}</p>}
 
-      <Link to="/login">
-        Login
-      </Link>
+        <Link to="/login">
+          Login
+        </Link>
+      </div>
     </div>
   );
 }

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 
+import "../styles/LoginPage.css"
+
 import { login } from "../api/auth.api";
 import { loginSuccess } from "../features/auth/authSlice";
 
@@ -41,37 +43,39 @@ function LoginPage() {
   }
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div className="login-container">
+      <div className="login-card">
+        <h1>Login</h1>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Username"
-          value={username}
-          onChange={(e) =>
-            setUsername(e.target.value)
-          }
-        />
+        <form onSubmit={handleSubmit}>
+          <input
+            placeholder="Username"
+            value={username}
+            onChange={(e) =>
+              setUsername(e.target.value)
+            }
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
-        />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
+          />
 
-        <button type="submit">
-          Login
-        </button>
-      </form>
+          <button type="submit">
+            Login
+          </button>
+        </form>
 
-      {error && <p>{error}</p>}
+        {error && <p>{error}</p>}
 
-      <Link to="/register">
-        Register
-      </Link>
+        <Link to="/register">
+          Register
+        </Link>
+      </div>
     </div>
   );
 }
