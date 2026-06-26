@@ -6,7 +6,7 @@ function registerSocketServer(io) {
   registerSocketAuth(io);
 
   io.on("connection", (socket) => {
-    console.log(`[socket] connected: ${socket.id}`);
+    console.log(`[socket] connected: ${socket.id} user=${socket.user?.username || "unknown"}`);
 
     registerRoomSocketHandlers(io, socket);
     registerWhiteboardSocketHandlers(io, socket);

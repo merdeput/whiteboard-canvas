@@ -100,4 +100,6 @@ function createAppError(statusCode, message) {
 module.exports = {
   createRoom,
   getRoomById,
+  verifyRoomAccess,
+  sanitizeRoom,
 };
