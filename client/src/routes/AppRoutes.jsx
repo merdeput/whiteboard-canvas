@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import RoomPage from "../pages/RoomPage";
+import DashboardPage from "../pages/DashBoardPage";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -29,7 +30,15 @@ function AppRoutes() {
                     <RoomPage />
                     </ProtectedRoute>
                 }
-        />
+                />
+                <Route
+                path="/dashboard"
+                element={
+                    <ProtectedRoute>
+                    <DashboardPage />
+                    </ProtectedRoute>
+                }
+                />
             </Routes>
         </BrowserRouter>
     )

@@ -30,11 +30,11 @@ function LoginPage() {
       dispatch(
         loginSuccess({
           user: data.user,
-          token: data.accessToken,
+          token: data.token,
         })
       );
 
-      navigate("/room/demo");
+      navigate("/dashboard");
     } catch (err) {
       setError(
         err.response?.data?.message || "Login failed"
