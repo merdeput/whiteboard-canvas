@@ -19,7 +19,13 @@ async function createRoom({ name, ownerId, publicity = "public", password }) {
 
   let passwordHash = null;
 
-  if (password && password.trim()) {
+  if (publicity === "private") {
+    if (!password || !password.trim()) {
+      throw createAppError(400, "Password is required for private rooms");
+    }
+
+    passwordHash = await bcrypt.hash(password.trim(), 10);
+  } else if (password && password.trim()) {
     passwordHash = await bcrypt.hash(password.trim(), 10);
   }
 
@@ -64,13 +70,18 @@ async function verifyRoomAccess({ roomId, password }) {
     throw createAppError(404, "Room not found");
   }
 
-  // If room has a password, require correct password
-  if (room.passwordHash) {
-    if (!password) {
+  const hasPassword = Boolean(room.passwordHash) || room.publicity === "private";
+
+  if (hasPassword) {
+    if (!password || !password.trim()) {
       throw createAppError(401, "Room password is required");
     }
 
-    const isValid = await bcrypt.compare(password, room.passwordHash);
+    if (!room.passwordHash) {
+      throw createAppError(401, "Invalid room password");
+    }
+
+    const isValid = await bcrypt.compare(password.trim(), room.passwordHash);
     if (!isValid) {
       throw createAppError(401, "Invalid room password");
     }

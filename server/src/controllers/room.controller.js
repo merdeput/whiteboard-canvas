@@ -24,7 +24,21 @@ function getRoomById(req, res, next) {
   }
 }
 
+async function verifyRoomAccess(req, res, next) {
+  try {
+    await roomService.verifyRoomAccess({
+      roomId: req.params.roomId,
+      password: req.body.password,
+    });
+
+    return res.status(200).json({ valid: true });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createRoom,
   getRoomById,
+  verifyRoomAccess,
 };

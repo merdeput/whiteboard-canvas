@@ -21,6 +21,11 @@ function CreateRoomForm() {
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (publicity === "private" && !password.trim()) {
+      setError("Password is required for private rooms");
+      return;
+    }
+
     setError("");
     setLoading(true);
 
@@ -63,7 +68,7 @@ function CreateRoomForm() {
 
         <input
           type="password"
-          placeholder="Password (optional)"
+          placeholder={publicity === "private" ? "Password (required)" : "Password (optional)"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
