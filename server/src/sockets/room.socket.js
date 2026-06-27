@@ -4,6 +4,7 @@ const whiteboardsStore = require("../stores/whiteboards.store");
 
 function registerRoomSocketHandlers(io, socket){
   socket.on(socketEvents.ROOM_JOIN, async (payload = {}) => {
+    console.log("ROOM_JOIN payload:", payload);
     try {
       const { roomId, password } = payload;
 

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { useDispatch } from "react-redux";
 import { getRoom } from "../../api/room.api";
-
 import "../../styles/DashBoardPage.css"
 
 function JoinRoomForm() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [roomId, setRoomId] = useState("");
 
@@ -20,14 +20,13 @@ function JoinRoomForm() {
 
     setLoading(true);
     setError("");
-
     try {
       const { room } = await getRoom(roomId);
-
-      navigate(`/room/${room.id}`);
+      navigate(`/room/${room.id}`, {
+        state: { password }});
     } catch (err) {
       setError(
-        err.response?.data?.message || "Room not found"
+        err.response?.data?.message || err.message
       );
     } finally {
       setLoading(false);

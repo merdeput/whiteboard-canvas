@@ -1,10 +1,15 @@
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import useRoomSocket from "../hooks/useRoomSocket"
 
 import "../styles/RoomPage.css"
 
 function RoomPage() {
   const { roomId } = useParams();
-
+  const token = useSelector((state)=> state.auth.token);
+  const location = useLocation();
+  const password = location.state?.password;
+  useRoomSocket({ token, roomId, password, });
   return (
     <div className="room-container">
       <header className="room-header">
