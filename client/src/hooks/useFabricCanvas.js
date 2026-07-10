@@ -1,6 +1,14 @@
 import { useEffect, useRef } from "react";
 import createCanvas from "../features/whiteboard/fabric/createCanvas";
 import resizeCanvas from "../features/whiteboard/fabric/resizeCanvas";
+import {
+  enableDrawing,
+  disableDrawing,
+  toggleDrawing,
+  setBrushColor,
+  setBrushWidth,
+  clearCanvas,
+} from "../features/whiteboard/fabric/fabricTools";
 
 function useFabricCanvas() {
   const containerRef = useRef(null);
@@ -39,10 +47,20 @@ function useFabricCanvas() {
     };
   }, []);
 
+  const tools = {
+    enableDrawing: () => enableDrawing(fabricCanvasRef.current),
+    disableDrawing: () => disableDrawing(fabricCanvasRef.current),
+    toggleDrawing: () => toggleDrawing(fabricCanvasRef.current),
+    setBrushColor: (color) => setBrushColor(fabricCanvasRef.current, color),
+    setBrushWidth: (width) => setBrushWidth(fabricCanvasRef.current, width),
+    clearCanvas: () => clearCanvas(fabricCanvasRef.current),
+  };
+
   return {
     containerRef,
     canvasRef,
     fabricCanvasRef,
+    tools,
   };
 }
 

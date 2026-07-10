@@ -112,6 +112,48 @@
   border-style: dashed;
 }
 
+.whiteboard-toolbar__control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 2px solid var(--wb-border-strong);
+  border-radius: var(--wb-radius-sm);
+  background: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--wb-text-muted);
+}
+
+.whiteboard-toolbar__control span {
+  white-space: nowrap;
+}
+
+.whiteboard-toolbar__control input[type="color"] {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--wb-border-strong);
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+}
+
+.whiteboard-toolbar__control input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.whiteboard-toolbar__control input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
+.whiteboard-toolbar__control input[type="range"] {
+  width: 120px;
+  accent-color: var(--wb-accent);
+  cursor: pointer;
+}
+
 /* Canvas */
 
 .whiteboard-canvas {
@@ -147,7 +189,13 @@
     gap: 8px;
   }
 
-  .whiteboard-toolbar__button {
+  .whiteboard-toolbar__button,
+  .whiteboard-toolbar__control {
     width: 100%;
+  }
+
+  .whiteboard-toolbar__control input[type="range"] {
+    flex: 1;
+    width: auto;
   }
 }

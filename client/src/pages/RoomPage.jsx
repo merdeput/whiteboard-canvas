@@ -4,6 +4,7 @@ import RoomHeader from "../features/room/components/RoomHeader";
 import WhiteboardStatus from "../features/whiteboard/components/WhiteboardStatus";
 import WhiteboardToolbar from "../features/whiteboard/components/WhiteboardToolbar";
 import WhiteboardCanvas from "../features/whiteboard/components/WhiteboardCanvas";
+import useFabricCanvas from "../hooks/useFabricCanvas";
 import useRoomSocket from "../hooks/useRoomSocket";
 
 import "../styles/RoomPage.css";
@@ -24,12 +25,13 @@ function RoomPage() {
   if (error) {
     connectionStatus = `Error: ${error}`;
   } else if (loading) {
-    connectionStatus = "Loading…";
+    connectionStatus = "Loading...";
   } else if (connected) {
     connectionStatus = "Connected";
   }
 
   const roomName = currentRoom?.name || "Untitled Room";
+  const whiteboard = useFabricCanvas();
 
   return (
     <div className="room-container">
@@ -41,8 +43,11 @@ function RoomPage() {
 
       <main className="room-content">
         <WhiteboardStatus />
-        <WhiteboardToolbar />
-        <WhiteboardCanvas />
+        <WhiteboardToolbar tools={whiteboard.tools} />
+        <WhiteboardCanvas
+          containerRef={whiteboard.containerRef}
+          canvasRef={whiteboard.canvasRef}
+        />
       </main>
     </div>
   );

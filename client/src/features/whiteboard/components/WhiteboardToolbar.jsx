@@ -1,18 +1,49 @@
-const TOOLS = ["Pencil", "Eraser", "Rectangle", "Circle", "Text", "Clear"];
-
-function WhiteboardToolbar() {
+function WhiteboardToolbar({ tools }) {
   return (
     <div className="whiteboard-toolbar" aria-label="Whiteboard toolbar">
-      {TOOLS.map((tool) => (
-        <button
-          key={tool}
-          type="button"
-          className="whiteboard-toolbar__button"
-          disabled
-        >
-          {tool}
-        </button>
-      ))}
+      <button
+        type="button"
+        className="whiteboard-toolbar__button"
+        onClick={tools.disableDrawing}
+      >
+        Select
+      </button>
+
+      <button
+        type="button"
+        className="whiteboard-toolbar__button"
+        onClick={tools.enableDrawing}
+      >
+        Pencil
+      </button>
+
+      <label className="whiteboard-toolbar__control">
+        <span>Color</span>
+        <input
+          type="color"
+          defaultValue="#000000"
+          onChange={(e) => tools.setBrushColor(e.target.value)}
+        />
+      </label>
+
+      <label className="whiteboard-toolbar__control">
+        <span>Width</span>
+        <input
+          type="range"
+          min={1}
+          max={20}
+          defaultValue={3}
+          onChange={(e) => tools.setBrushWidth(Number(e.target.value))}
+        />
+      </label>
+
+      <button
+        type="button"
+        className="whiteboard-toolbar__button"
+        onClick={tools.clearCanvas}
+      >
+        Clear
+      </button>
     </div>
   );
 }

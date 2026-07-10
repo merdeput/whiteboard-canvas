@@ -1,11 +1,16 @@
-import useFabricCanvas from "../../../hooks/useFabricCanvas";
-
-function WhiteboardCanvas() {
-  const { containerRef, canvasRef } = useFabricCanvas();
-
+function WhiteboardCanvas({
+  containerRef,
+  canvasRef,
+}) {
   return (
-    <div ref={containerRef} className="whiteboard-canvas">
-      <canvas ref={canvasRef} className="whiteboard-canvas__surface" />
+    <div
+      ref={containerRef}
+      className="whiteboard-canvas"
+    >
+      <canvas
+        ref={canvasRef}
+        className="whiteboard-canvas__surface"
+      />
     </div>
   );
 }
