@@ -1,4 +1,5 @@
 # Logs
+DEVELOPER_MAP.md
 logs
 *.log
 npm-debug.log*
