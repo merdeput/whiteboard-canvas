@@ -1,5 +1,6 @@
 import { useParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useRef } from "react";
 import RoomHeader from "../features/room/components/RoomHeader";
 import WhiteboardStatus from "../features/whiteboard/components/WhiteboardStatus";
 import WhiteboardToolbar from "../features/whiteboard/components/WhiteboardToolbar";
@@ -18,7 +19,23 @@ function RoomPage() {
   const location = useLocation();
   const password = location.state?.password;
 
-  useRoomSocket({ token, roomId, password });
+  const sendPathRef = useRef(() => {});
+  const sendClearRef = useRef(() => {});
+  const whiteboard = useFabricCanvas({
+    onPathCreated: (data) => sendPathRef.current(data),
+    onClear: () => sendClearRef.current(),
+  });
+  
+  const { sendPath, sendClear } = useRoomSocket({
+    token,
+    roomId,
+    password,
+    onRemotePath: whiteboard.tools.addRemotePath,
+    onRemoteClear: whiteboard.tools.applyCanvasClear,
+    onWhiteboardState: whiteboard.tools.loadWhiteboardState,
+  });
+  sendPathRef.current = sendPath;
+  sendClearRef.current = sendClear;
 
   let connectionStatus = "Disconnected";
 
@@ -31,7 +48,6 @@ function RoomPage() {
   }
 
   const roomName = currentRoom?.name || "Untitled Room";
-  const whiteboard = useFabricCanvas();
 
   return (
     <div className="room-container">

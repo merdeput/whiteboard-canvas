@@ -1,6 +1,6 @@
 const socketEvents = require("../constants/constants");
+const whiteboardController = require("../controllers/whiteboard.controller");
 const roomService = require("../services/room.service");
-const whiteboardsStore = require("../stores/whiteboards.store");
 
 function registerRoomSocketHandlers(io, socket){
   socket.on(socketEvents.ROOM_JOIN, async (payload = {}) => {
@@ -21,9 +21,7 @@ function registerRoomSocketHandlers(io, socket){
       console.log(
         `[room] ${socket.user.username} joined ${room.id}`
       );
-      const whiteboardState = whiteboardsStore.getWhiteboardState(room.id);
-
-      socket.emit(socketEvents.WHITEBOARD_STATE, whiteboardState);
+      whiteboardController.emitWhiteboardState(socket, room.id);
     } catch (error) {
       socket.emit(socketEvents.ROOM_ERROR, {
         message: error.message || "Failed to join room",

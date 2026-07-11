@@ -8,4 +8,6 @@ module.exports = {
   WHITEBOARD_STATE: "whiteboard:state",
   WHITEBOARD_DRAW_PATH: "whiteboard:draw-path",
   WHITEBOARD_PATH_CREATED: "whiteboard:path-created",
+  WHITEBOARD_CLEAR: "whiteboard:clear",
+  WHITEBOARD_CLEARED: "whiteboard:cleared",
 };
