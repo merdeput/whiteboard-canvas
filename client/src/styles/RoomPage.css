@@ -11,9 +11,9 @@
   gap: 24px;
   padding: 24px 32px;
 
-  background: #a3b589;
-  border-bottom: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  background: #de8d4e;
+  border-bottom: 2px solid black;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .room-header__primary,
@@ -39,29 +39,27 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #23331a;
+  color: #1a1a1e;
   overflow-wrap: break-word;
 }
 
 .room-header__eyebrow,
-.room-header__label,
-.whiteboard-status__label {
+.room-header__label {
   margin: 0;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #3e4d33;
+  color: #734f32;
 }
 
 .room-header__item {
   gap: 4px;
 }
 
-.room-header__value,
-.whiteboard-status__value {
+.room-header__value {
   font-weight: 600;
-  color: #1f2917;
+  color: #1a1a1e;
   word-break: break-word;
 }
 
@@ -74,61 +72,6 @@
   background: var(--background);
 }
 
-.whiteboard-status,
-.whiteboard-toolbar,
-.whiteboard-canvas {
-  background: white;
-  border-radius: 6px;
-  border: 1px solid #e2ded4;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.whiteboard-status {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px 24px;
-}
-
-.whiteboard-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px 24px;
-}
-
-.whiteboard-toolbar__button {
-  min-width: 96px;
-  padding: 8px 14px;
-  border-radius: 4px;
-  border: 1px solid #d6d0c2;
-  background: #fafaf8;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.whiteboard-toolbar__button:hover:not(:disabled) {
-  background: #f0efe9;
-  border-color: #a3b589;
-}
-
-.whiteboard-toolbar__button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.whiteboard-canvas {
-  flex: 1;
-  min-height: 400px;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #9a9a9a;
-  font-size: 0.95rem;
-}
-
 @media (max-width: 768px) {
   .room-header {
     flex-direction: column;
@@ -137,9 +80,5 @@
 
   .room-content {
     padding: 16px;
-  }
-
-  .whiteboard-toolbar__button {
-    width: 100%;
   }
 }

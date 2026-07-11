@@ -25,10 +25,22 @@ function getOrCreateWhiteboard(roomId) {
   return getWhiteboard(roomId) || createWhiteboard(roomId);
 }
 
-function addObjectToWhiteboard(roomId, object) {
+function addObjectToWhiteboard({
+  roomId,
+  object,
+  roomExists,
+  socketJoinedRoom,
+}) {
+  validateAddObject({
+    roomId,
+    object,
+    roomExists,
+    socketJoinedRoom,
+  });
+
   const whiteboard = getOrCreateWhiteboard(roomId);
   whiteboard.objects.push(object);
-  return whiteboard;
+  return object;
 }
 
 function getWhiteboardState(roomId) {
@@ -39,10 +51,64 @@ function getWhiteboardState(roomId) {
   };
 }
 
+function clearWhiteboard({
+  roomId,
+  roomExists,
+  socketJoinedRoom,
+}) {
+  if (!roomId) {
+    throw new Error("Room ID is required");
+  }
+
+  if (!roomExists) {
+    throw new Error("Room not found");
+  }
+
+  if (!socketJoinedRoom) {
+    throw new Error("Socket has not joined this room");
+  }
+
+  const whiteboard = getOrCreateWhiteboard(roomId);
+  whiteboard.objects = [];
+
+  return {
+    roomId: whiteboard.roomId,
+    objects: [...whiteboard.objects],
+  };
+}
+
+function validateAddObject({
+  roomId,
+  object,
+  roomExists,
+  socketJoinedRoom,
+}) {
+  if (!roomId) {
+    throw new Error("Room ID is required");
+  }
+
+  if (!roomExists) {
+    throw new Error("Room not found");
+  }
+
+  if (!socketJoinedRoom) {
+    throw new Error("Socket has not joined this room");
+  }
+
+  if (!object || typeof object !== "object") {
+    throw new Error("Path payload is required");
+  }
+
+  if (object.type !== "path") {
+    throw new Error("Only path objects are supported");
+  }
+}
+
 module.exports = {
   getWhiteboard,
   createWhiteboard,
   getOrCreateWhiteboard,
   addObjectToWhiteboard,
   getWhiteboardState,
+  clearWhiteboard,
 };

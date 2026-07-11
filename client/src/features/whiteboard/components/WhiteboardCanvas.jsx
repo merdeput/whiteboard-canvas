@@ -1,7 +1,16 @@
-function WhiteboardCanvas() {
+function WhiteboardCanvas({
+  containerRef,
+  canvasRef,
+}) {
   return (
-    <div className="whiteboard-canvas">
-      Canvas Placeholder
+    <div
+      ref={containerRef}
+      className="whiteboard-canvas"
+    >
+      <canvas
+        ref={canvasRef}
+        className="whiteboard-canvas__surface"
+      />
     </div>
   );
 }
