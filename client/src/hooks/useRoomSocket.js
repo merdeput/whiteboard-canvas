@@ -12,16 +12,22 @@ export default function useRoomSocket({
   roomId,
   password,
   onRemoteObject,
+  onRemoteObjectUpdate,
+  onRemoteObjectsDelete,
   onRemoteClear,
   onWhiteboardState,
 }) {
   const dispatch = useDispatch();
   const socketRef = useRef(null);
   const onRemoteObjectRef = useRef(onRemoteObject);
+  const onRemoteObjectUpdateRef = useRef(onRemoteObjectUpdate);
+  const onRemoteObjectsDeleteRef = useRef(onRemoteObjectsDelete);
   const onRemoteClearRef = useRef(onRemoteClear);
   const onWhiteboardStateRef = useRef(onWhiteboardState);
 
   onRemoteObjectRef.current = onRemoteObject;
+  onRemoteObjectUpdateRef.current = onRemoteObjectUpdate;
+  onRemoteObjectsDeleteRef.current = onRemoteObjectsDelete;
   onRemoteClearRef.current = onRemoteClear;
   onWhiteboardStateRef.current = onWhiteboardState;
 
@@ -55,6 +61,14 @@ export default function useRoomSocket({
       onRemoteObjectRef.current?.(data);
     };
 
+    const handleObjectUpdated = (data) => {
+      onRemoteObjectUpdateRef.current?.(data);
+    };
+
+    const handleObjectsDeleted = (data) => {
+      onRemoteObjectsDeleteRef.current?.(data);
+    };
+
     const handleWhiteboardCleared = (data) => {
       onRemoteClearRef.current?.(data);
     };
@@ -63,6 +77,8 @@ export default function useRoomSocket({
     socket.on(SOCKET_EVENTS.ROOM_ERROR, handleError);
     socket.on(SOCKET_EVENTS.WHITEBOARD_STATE, handleWhiteboardState);
     socket.on(SOCKET_EVENTS.WHITEBOARD_OBJECT_CREATED, handleObjectCreated);
+    socket.on(SOCKET_EVENTS.WHITEBOARD_OBJECT_UPDATED, handleObjectUpdated);
+    socket.on(SOCKET_EVENTS.WHITEBOARD_OBJECTS_DELETED, handleObjectsDeleted);
     socket.on(SOCKET_EVENTS.WHITEBOARD_CLEARED, handleWhiteboardCleared);
 
     socket.on("disconnect", () => {
@@ -76,6 +92,8 @@ export default function useRoomSocket({
       socket.off(SOCKET_EVENTS.ROOM_ERROR);
       socket.off(SOCKET_EVENTS.WHITEBOARD_STATE);
       socket.off(SOCKET_EVENTS.WHITEBOARD_OBJECT_CREATED);
+      socket.off(SOCKET_EVENTS.WHITEBOARD_OBJECT_UPDATED);
+      socket.off(SOCKET_EVENTS.WHITEBOARD_OBJECTS_DELETED);
       socket.off(SOCKET_EVENTS.WHITEBOARD_CLEARED);
 
       disconnectSocket();
@@ -96,5 +114,19 @@ export default function useRoomSocket({
     });
   };
 
-  return { sendObject, sendClear };
+  const sendObjectUpdate = (object) => {
+    socketRef.current?.emit(SOCKET_EVENTS.WHITEBOARD_UPDATE_OBJECT, {
+      roomId,
+      object,
+    });
+  };
+
+  const sendObjectsDelete = (objectIds) => {
+    socketRef.current?.emit(SOCKET_EVENTS.WHITEBOARD_DELETE_OBJECTS, {
+      roomId,
+      objectIds,
+    });
+  };
+
+  return { sendObject, sendObjectUpdate, sendObjectsDelete, sendClear };
 }

@@ -51,6 +51,66 @@ function getWhiteboardState(roomId) {
   };
 }
 
+function updateObjectInWhiteboard({
+  roomId,
+  object,
+  roomExists,
+  socketJoinedRoom,
+}) {
+  validateAddObject({
+    roomId,
+    object,
+    roomExists,
+    socketJoinedRoom,
+  });
+
+  if (!object.objectId) {
+    throw new Error("Object ID is required");
+  }
+
+  const whiteboard = getOrCreateWhiteboard(roomId);
+  const objectIndex = whiteboard.objects.findIndex(
+    (existingObject) => existingObject.objectId === object.objectId
+  );
+
+  if (objectIndex === -1) {
+    throw new Error("Whiteboard object not found");
+  }
+
+  whiteboard.objects[objectIndex] = object;
+  return object;
+}
+
+function deleteObjectsFromWhiteboard({
+  roomId,
+  objectIds,
+  roomExists,
+  socketJoinedRoom,
+}) {
+  if (!roomId) {
+    throw new Error("Room ID is required");
+  }
+
+  if (!roomExists) {
+    throw new Error("Room not found");
+  }
+
+  if (!socketJoinedRoom) {
+    throw new Error("Socket has not joined this room");
+  }
+
+  if (!Array.isArray(objectIds) || !objectIds.length) {
+    throw new Error("Object IDs are required");
+  }
+
+  const whiteboard = getOrCreateWhiteboard(roomId);
+  whiteboard.objects = whiteboard.objects.filter(
+    (object) => !objectIds.includes(object.objectId)
+  );
+
+  return objectIds;
+}
+
 function clearWhiteboard({
   roomId,
   roomExists,
@@ -109,6 +169,8 @@ module.exports = {
   createWhiteboard,
   getOrCreateWhiteboard,
   addObjectToWhiteboard,
+  updateObjectInWhiteboard,
+  deleteObjectsFromWhiteboard,
   getWhiteboardState,
   clearWhiteboard,
 };

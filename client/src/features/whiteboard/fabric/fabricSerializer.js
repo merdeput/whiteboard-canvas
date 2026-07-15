@@ -8,9 +8,28 @@ const PATH_PROPS = [
   'originX', 'originY',
 ];
 
+function ensureObjectId(path) {
+  if (path.objectId) {
+    return path.objectId;
+  }
+
+  const objectId =
+    globalThis.crypto?.randomUUID?.() ||
+    `object_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+  if (typeof path.set === "function") {
+    path.set("objectId", objectId);
+  } else {
+    path.objectId = objectId;
+  }
+
+  return objectId;
+}
+
 export function serializePath(path) {
   const data = {
     type: 'path',
+    objectId: ensureObjectId(path),
     pathData: (path.path || []).map((cmd) => cmd.slice()),
   };
 
