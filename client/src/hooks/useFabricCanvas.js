@@ -12,14 +12,14 @@ import {
   clearCanvas,
 } from "../features/whiteboard/fabric/fabricTools";
 
-function useFabricCanvas({ onPathCreated, onClear } = {}) {
+function useFabricCanvas({ onObjectCreated, onClear } = {}) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
   const isApplyingRemote = useRef(false);
-  const onPathCreatedRef = useRef(onPathCreated);
+  const onObjectCreatedRef = useRef(onObjectCreated);
   const onClearRef = useRef(onClear);
-  onPathCreatedRef.current = onPathCreated;
+  onObjectCreatedRef.current = onObjectCreated;
   onClearRef.current = onClear;
 
   useEffect(() => {
@@ -50,8 +50,8 @@ function useFabricCanvas({ onPathCreated, onClear } = {}) {
       if (isApplyingRemote.current || !e.path) {
         return;
       }
-      const path = serializePath(e.path);
-      onPathCreatedRef.current?.(path);
+      const object = serializePath(e.path);
+      onObjectCreatedRef.current?.(object);
     };
  
     fabricCanvas.on("path:created", handlePathCreated);
@@ -65,15 +65,15 @@ function useFabricCanvas({ onPathCreated, onClear } = {}) {
     };
   }, []);
 
-  const addRemotePath = (data) => {
+  const addRemoteObject = (data) => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !data?.path) {
+    if (!canvas || !data?.object) {
       return;
     }
 
     isApplyingRemote.current = true;
-    const path = deserializePath(data.path);
-    canvas.add(path);
+    const object = deserializePath(data.object);
+    canvas.add(object);
     canvas.requestRenderAll();
     isApplyingRemote.current = false;
   };
@@ -104,8 +104,8 @@ function useFabricCanvas({ onPathCreated, onClear } = {}) {
         continue;
       }
 
-      const path = deserializePath(object);
-      canvas.add(path);
+      const canvasObject = deserializePath(object);
+      canvas.add(canvasObject);
     }
 
     canvas.requestRenderAll();
@@ -122,7 +122,7 @@ function useFabricCanvas({ onPathCreated, onClear } = {}) {
       clearCanvas(fabricCanvasRef.current);
       onClearRef.current?.();
     },
-    addRemotePath,
+    addRemoteObject,
     applyCanvasClear,
     loadWhiteboardState,
   };

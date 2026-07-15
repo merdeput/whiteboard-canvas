@@ -1,17 +1,17 @@
 const socketEvents = require("../constants/constants");
 const whiteboardService = require("../services/whiteboard.service");
 
-function handleDrawPath(socket, payload = {}) {
-  const { roomId, path } = payload;
-  const storedPath = whiteboardService.addPathToWhiteboard({
+function handleDrawObject(socket, payload = {}) {
+  const { roomId, object } = payload;
+  const storedObject = whiteboardService.addObjectToWhiteboard({
     socket,
     roomId,
-    path,
+    object,
   });
 
-  socket.to(roomId).emit(socketEvents.WHITEBOARD_PATH_CREATED, {
+  socket.to(roomId).emit(socketEvents.WHITEBOARD_OBJECT_CREATED, {
     roomId,
-    path: storedPath,
+    object: storedObject,
   });
 }
 
@@ -34,7 +34,7 @@ function emitWhiteboardState(socket, roomId) {
 }
 
 module.exports = {
-  handleDrawPath,
+  handleDrawObject,
   handleClearWhiteboard,
   emitWhiteboardState,
 };

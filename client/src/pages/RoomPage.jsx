@@ -19,22 +19,22 @@ function RoomPage() {
   const location = useLocation();
   const password = location.state?.password;
 
-  const sendPathRef = useRef(() => {});
+  const sendObjectRef = useRef(() => {});
   const sendClearRef = useRef(() => {});
   const whiteboard = useFabricCanvas({
-    onPathCreated: (data) => sendPathRef.current(data),
+    onObjectCreated: (data) => sendObjectRef.current(data),
     onClear: () => sendClearRef.current(),
   });
   
-  const { sendPath, sendClear } = useRoomSocket({
+  const { sendObject, sendClear } = useRoomSocket({
     token,
     roomId,
     password,
-    onRemotePath: whiteboard.tools.addRemotePath,
+    onRemoteObject: whiteboard.tools.addRemoteObject,
     onRemoteClear: whiteboard.tools.applyCanvasClear,
     onWhiteboardState: whiteboard.tools.loadWhiteboardState,
   });
-  sendPathRef.current = sendPath;
+  sendObjectRef.current = sendObject;
   sendClearRef.current = sendClear;
 
   let connectionStatus = "Disconnected";

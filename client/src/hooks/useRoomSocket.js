@@ -11,17 +11,17 @@ export default function useRoomSocket({
   token,
   roomId,
   password,
-  onRemotePath,
+  onRemoteObject,
   onRemoteClear,
   onWhiteboardState,
 }) {
   const dispatch = useDispatch();
   const socketRef = useRef(null);
-  const onRemotePathRef = useRef(onRemotePath);
+  const onRemoteObjectRef = useRef(onRemoteObject);
   const onRemoteClearRef = useRef(onRemoteClear);
   const onWhiteboardStateRef = useRef(onWhiteboardState);
 
-  onRemotePathRef.current = onRemotePath;
+  onRemoteObjectRef.current = onRemoteObject;
   onRemoteClearRef.current = onRemoteClear;
   onWhiteboardStateRef.current = onWhiteboardState;
 
@@ -51,8 +51,8 @@ export default function useRoomSocket({
       onWhiteboardStateRef.current?.(state);
     };
 
-    const handlePathCreated = (data) => {
-      onRemotePathRef.current?.(data);
+    const handleObjectCreated = (data) => {
+      onRemoteObjectRef.current?.(data);
     };
 
     const handleWhiteboardCleared = (data) => {
@@ -62,7 +62,7 @@ export default function useRoomSocket({
     socket.on(SOCKET_EVENTS.ROOM_JOINED, handleJoined);
     socket.on(SOCKET_EVENTS.ROOM_ERROR, handleError);
     socket.on(SOCKET_EVENTS.WHITEBOARD_STATE, handleWhiteboardState);
-    socket.on(SOCKET_EVENTS.WHITEBOARD_PATH_CREATED, handlePathCreated);
+    socket.on(SOCKET_EVENTS.WHITEBOARD_OBJECT_CREATED, handleObjectCreated);
     socket.on(SOCKET_EVENTS.WHITEBOARD_CLEARED, handleWhiteboardCleared);
 
     socket.on("disconnect", () => {
@@ -75,7 +75,7 @@ export default function useRoomSocket({
       socket.off(SOCKET_EVENTS.ROOM_JOINED);
       socket.off(SOCKET_EVENTS.ROOM_ERROR);
       socket.off(SOCKET_EVENTS.WHITEBOARD_STATE);
-      socket.off(SOCKET_EVENTS.WHITEBOARD_PATH_CREATED);
+      socket.off(SOCKET_EVENTS.WHITEBOARD_OBJECT_CREATED);
       socket.off(SOCKET_EVENTS.WHITEBOARD_CLEARED);
 
       disconnectSocket();
@@ -83,10 +83,10 @@ export default function useRoomSocket({
     };
   }, [dispatch, token, roomId, password]);
 
-  const sendPath = (path) => {
-    socketRef.current?.emit(SOCKET_EVENTS.WHITEBOARD_DRAW_PATH, {
+  const sendObject = (object) => {
+    socketRef.current?.emit(SOCKET_EVENTS.WHITEBOARD_DRAW_OBJECT, {
       roomId,
-      path,
+      object,
     });
   };
 
@@ -96,5 +96,5 @@ export default function useRoomSocket({
     });
   };
 
-  return { sendPath, sendClear };
+  return { sendObject, sendClear };
 }

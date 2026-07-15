@@ -2,14 +2,14 @@ const socketEvents = require("../constants/constants");
 const whiteboardController = require("../controllers/whiteboard.controller");
 
 function registerWhiteboardSocketHandlers(io, socket){
-  socket.on(socketEvents.WHITEBOARD_DRAW_PATH, (payload = {}) => {
+  socket.on(socketEvents.WHITEBOARD_DRAW_OBJECT, (payload = {}) => {
     try {
       const { roomId } = payload;
-      whiteboardController.handleDrawPath(socket, payload);
-      console.log(`[draw] ${socket.user.username} -> ${roomId}`);
+      whiteboardController.handleDrawObject(socket, payload);
+      console.log(`[draw-object] ${socket.user.username} -> ${roomId}`);
     } catch (error) {
       socket.emit(socketEvents.ROOM_ERROR, {
-        message: error.message || "Failed to process whiteboard draw event",
+        message: error.message || "Failed to process whiteboard object event",
       });
     }
   });

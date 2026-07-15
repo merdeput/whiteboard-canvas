@@ -1,12 +1,12 @@
 const roomsStore = require("../stores/rooms.store");
 const whiteboardsStore = require("../stores/whiteboards.store");
 
-function addPathToWhiteboard({ socket, roomId, path }) {
+function addObjectToWhiteboard({ socket, roomId, object }) {
   const room = roomsStore.findRoomById(roomId);
 
   return whiteboardsStore.addObjectToWhiteboard({
     roomId,
-    object: path,
+    object,
     roomExists: Boolean(room),
     socketJoinedRoom: Boolean(socket?.rooms?.has(roomId)),
   });
@@ -38,7 +38,7 @@ function createAppError(message) {
 }
 
 module.exports = {
-  addPathToWhiteboard,
+  addObjectToWhiteboard,
   getWhiteboardState,
   clearWhiteboard,
 };
