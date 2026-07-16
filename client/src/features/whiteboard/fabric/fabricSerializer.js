@@ -50,12 +50,12 @@ export function deserializePath(data) {
     ... options,
     selectable: false,
     evented: false,
-    hasControls: false,
+    hasControls: true,
     hasBorders: false,
     lockMovementX: true,
     lockMovementY: true,
     lockRotation: true,
-    lockScalingX: true,
-    lockScalingY: true,
+    lockScalingX: false,
+    lockScalingY: false,
   });
 }

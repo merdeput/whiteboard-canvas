@@ -1,5 +1,14 @@
 import { PencilBrush } from "fabric";
 
+export const WHITEBOARD_TOOLS = Object.freeze({
+  SELECT: "SELECT",
+  PENCIL: "PENCIL",
+  RECTANGLE: "RECTANGLE",
+  CIRCLE: "CIRCLE",
+  LINE: "LINE",
+  TEXT: "TEXT",
+});
+
 function ensureBrush(canvas) {
   if (!(canvas.freeDrawingBrush instanceof PencilBrush)) {
     canvas.freeDrawingBrush = new PencilBrush(canvas);
@@ -11,35 +20,52 @@ function setObjectsSelectable(canvas, selectable) {
     object.set({
       selectable,
       evented: selectable,
-      hasControls: false,
+      hasControls: selectable,
       hasBorders: selectable,
       lockMovementX: !selectable,
       lockMovementY: !selectable,
       lockRotation: true,
-      lockScalingX: true,
-      lockScalingY: true,
+      lockScalingX: !selectable,
+      lockScalingY: !selectable,
     });
   }
 }
 
-export function activateDrawingTool(canvas) {
+export function setCanvasTool(canvas, tool) {
   if (!canvas) return;
 
-  ensureBrush(canvas);
-  canvas.isDrawingMode = true;
-  canvas.selection = false;
-  canvas.discardActiveObject();
-  setObjectsSelectable(canvas, false);
+  switch (tool) {
+    case WHITEBOARD_TOOLS.PENCIL:
+      ensureBrush(canvas);
+      canvas.isDrawingMode = true;
+      canvas.selection = false;
+      canvas.discardActiveObject();
+      setObjectsSelectable(canvas, false);
+      break;
+
+    case WHITEBOARD_TOOLS.SELECT:
+      canvas.isDrawingMode = false;
+      canvas.selection = true;
+      setObjectsSelectable(canvas, true);
+      break;
+
+    default:
+      canvas.isDrawingMode = false;
+      canvas.selection = false;
+      canvas.discardActiveObject();
+      setObjectsSelectable(canvas, false);
+      break;
+  }
+
   canvas.requestRenderAll();
 }
 
-export function activateSelectionTool(canvas) {
-  if (!canvas) return;
+export function activateDrawingTool(canvas) {
+  setCanvasTool(canvas, WHITEBOARD_TOOLS.PENCIL);
+}
 
-  canvas.isDrawingMode = false;
-  canvas.selection = true;
-  setObjectsSelectable(canvas, true);
-  canvas.requestRenderAll();
+export function activateSelectionTool(canvas) {
+  setCanvasTool(canvas, WHITEBOARD_TOOLS.SELECT);
 }
 
 export function enableDrawing(canvas) {
@@ -65,14 +91,14 @@ export function toggleDrawing(canvas) {
 export function setBrushColor(canvas, color) {
   if (!canvas) return;
 
-  activateDrawingTool(canvas);
+  ensureBrush(canvas);
   canvas.freeDrawingBrush.color = color;
 }
 
 export function setBrushWidth(canvas, width) {
   if (!canvas) return;
 
-  activateDrawingTool(canvas);
+  ensureBrush(canvas);
   canvas.freeDrawingBrush.width = Number(width);
 }
 

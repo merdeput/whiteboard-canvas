@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-// import { fabric } from 'fabric';
+import { useEffect, useRef, useState } from "react";
+import { Circle, Line, Rect } from "fabric";
 import createCanvas from "../features/whiteboard/fabric/createCanvas";
 import resizeCanvas from "../features/whiteboard/fabric/resizeCanvas";
 import { serializePath, deserializePath } from "../features/whiteboard/fabric/fabricSerializer";
@@ -11,6 +11,8 @@ import {
   toggleDrawing,
   setBrushColor,
   setBrushWidth,
+  setCanvasTool,
+  WHITEBOARD_TOOLS,
   deleteSelectedObjects,
   clearCanvas,
 } from "../features/whiteboard/fabric/fabricTools";
@@ -21,9 +23,14 @@ function useFabricCanvas({
   onObjectsDeleted,
   onClear,
 } = {}) {
+  const [activeTool, setActiveTool] = useState(WHITEBOARD_TOOLS.SELECT);
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
+  const activeToolRef = useRef(WHITEBOARD_TOOLS.SELECT);
+  const shapeDraftRef = useRef(null);
+  const strokeColorRef = useRef("#000000");
+  const strokeWidthRef = useRef(3);
   const isApplyingRemote = useRef(false);
   const onObjectCreatedRef = useRef(onObjectCreated);
   const onObjectModifiedRef = useRef(onObjectModified);
@@ -34,6 +41,45 @@ function useFabricCanvas({
   onObjectsDeletedRef.current = onObjectsDeleted;
   onClearRef.current = onClear;
 
+  const setTool = (tool) => {
+    activeToolRef.current = tool;
+    setActiveTool(tool);
+    setCanvasTool(fabricCanvasRef.current, tool);
+  };
+
+  const getPointerPosition = (canvas, event) => {
+    const pointer = canvas.getViewportPoint(event.e);
+    return pointer;
+  };
+
+  const createObjectId = () =>
+    globalThis.crypto?.randomUUID?.() ||
+    `object_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+  const updateShapeGeometry = (draft, pointer) => {
+    if (draft.tool === WHITEBOARD_TOOLS.RECTANGLE) {
+    draft.shape.set({
+      left: Math.min(draft.originX, pointer.x),
+      top: Math.min(draft.originY, pointer.y),
+      width: Math.abs(pointer.x - draft.originX),
+      height: Math.abs(pointer.y - draft.originY),
+    });
+    } else if (draft.tool === WHITEBOARD_TOOLS.CIRCLE) {
+      const dx = pointer.x - draft.originX;
+      const dy = pointer.y - draft.originY;
+      draft.shape.set({
+        radius: Math.sqrt((dx * dx) + (dy * dy)),
+      });
+    } else if (draft.tool === WHITEBOARD_TOOLS.LINE) {
+      draft.shape.set({
+        x2: pointer.x,
+        y2: pointer.y,
+      });
+    }
+
+    draft.shape.setCoords();
+  };
+
   useEffect(() => {
     if (!containerRef.current || !canvasRef.current) {
       return undefined;
@@ -41,7 +87,7 @@ function useFabricCanvas({
 
     const fabricCanvas = createCanvas(canvasRef.current);
     fabricCanvasRef.current = fabricCanvas;
-    activateSelectionTool(fabricCanvas);
+    setTool(WHITEBOARD_TOOLS.SELECT);
 
     const handleResize = () => {
       resizeCanvas(fabricCanvas, containerRef.current);
@@ -96,9 +142,121 @@ function useFabricCanvas({
         onObjectsDeletedRef.current?.(deletedObjectIds);
       }
     };
+
+    const handleMouseDown = (event) => {
+      const tool = activeToolRef.current;
+      if (
+        tool !== WHITEBOARD_TOOLS.RECTANGLE &&
+        tool !== WHITEBOARD_TOOLS.CIRCLE &&
+        tool !== WHITEBOARD_TOOLS.LINE
+      ) {
+        return;
+      }
+
+      const pointer = getPointerPosition(fabricCanvas, event);
+      const baseOptions = {
+        objectId: createObjectId(),
+        fill: "transparent",
+        stroke: strokeColorRef.current,
+        strokeWidth: strokeWidthRef.current,
+        selectable: false,
+        evented: false,
+        hasControls: false,
+        hasBorders: false,
+        lockRotation: true,
+      };
+
+      let shape = null;
+
+      if (tool === WHITEBOARD_TOOLS.RECTANGLE) {
+        shape = new Rect({
+          ...baseOptions,
+          originX: "left",
+          originY: "top",
+          left: pointer.x,
+          top: pointer.y,
+          width: 0,
+          height: 0,
+        });
+      } else if (tool === WHITEBOARD_TOOLS.CIRCLE) {
+        shape = new Circle({
+          ...baseOptions,
+          originX: "center",
+          originY: "center",
+          left: pointer.x,
+          top: pointer.y,
+          radius: 0,
+        });
+      } else if (tool === WHITEBOARD_TOOLS.LINE) {
+        shape = new Line([pointer.x, pointer.y, pointer.x, pointer.y], {
+          ...baseOptions,
+        });
+      }
+
+      if (!shape) {
+        return;
+      }
+
+      shapeDraftRef.current = {
+        tool,
+        originX: pointer.x,
+        originY: pointer.y,
+        shape,
+      };
+
+      fabricCanvas.add(shape);
+    };
+
+    const handleMouseMove = (event) => {
+      const draft = shapeDraftRef.current;
+
+      if (!draft) {
+        return;
+      }
+
+      const pointer = getPointerPosition(fabricCanvas, event);
+      console.log({
+          origin: shapeDraftRef.current.originX,
+          pointer: pointer.x,
+      });
+      updateShapeGeometry(draft, pointer);
+      fabricCanvas.requestRenderAll();
+    };
+
+    const handleMouseUp = (event) => {
+      const draft = shapeDraftRef.current;
+
+      if (!draft) {
+        return;
+      }
+
+      const pointer = getPointerPosition(fabricCanvas, event);
+      updateShapeGeometry(draft, pointer);
+      shapeDraftRef.current = null;
+
+      const isEmptyRectangle =
+        draft.tool === WHITEBOARD_TOOLS.RECTANGLE &&
+        (!draft.shape.width || !draft.shape.height);
+      const isEmptyCircle =
+        draft.tool === WHITEBOARD_TOOLS.CIRCLE &&
+        !draft.shape.radius;
+      const isEmptyLine =
+        draft.tool === WHITEBOARD_TOOLS.LINE &&
+        draft.shape.x1 === draft.shape.x2 &&
+        draft.shape.y1 === draft.shape.y2;
+
+      if (isEmptyRectangle || isEmptyCircle || isEmptyLine) {
+        fabricCanvas.remove(draft.shape);
+      }
+
+      setTool(WHITEBOARD_TOOLS.SELECT);
+    };
  
     fabricCanvas.on("path:created", handlePathCreated);
     fabricCanvas.on("object:modified", handleObjectModified);
+    fabricCanvas.on("mouse:down", handleMouseDown);
+    fabricCanvas.on("mouse:move", handleMouseMove);
+    fabricCanvas.on("mouse:up", handleMouseUp);
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
@@ -107,6 +265,9 @@ function useFabricCanvas({
       window.removeEventListener("keydown", handleKeyDown);
       fabricCanvas.off("path:created", handlePathCreated);
       fabricCanvas.off("object:modified", handleObjectModified);
+      fabricCanvas.off("mouse:down", handleMouseDown);
+      fabricCanvas.off("mouse:move", handleMouseMove);
+      fabricCanvas.off("mouse:up", handleMouseUp);
       fabricCanvas.dispose();
       fabricCanvasRef.current = null;
     };
@@ -211,13 +372,28 @@ function useFabricCanvas({
   };
 
   const tools = {
-    activateDrawingTool: () => activateDrawingTool(fabricCanvasRef.current),
-    activateSelectionTool: () => activateSelectionTool(fabricCanvasRef.current),
-    enableDrawing: () => enableDrawing(fabricCanvasRef.current),
-    disableDrawing: () => disableDrawing(fabricCanvasRef.current),
-    toggleDrawing: () => toggleDrawing(fabricCanvasRef.current),
-    setBrushColor: (color) => setBrushColor(fabricCanvasRef.current, color),
-    setBrushWidth: (width) => setBrushWidth(fabricCanvasRef.current, width),
+    activeTool,
+    activateDrawingTool: () => setTool(WHITEBOARD_TOOLS.PENCIL),
+    activateSelectionTool: () => setTool(WHITEBOARD_TOOLS.SELECT),
+    activateRectangleTool: () => setTool(WHITEBOARD_TOOLS.RECTANGLE),
+    activateCircleTool: () => setTool(WHITEBOARD_TOOLS.CIRCLE),
+    activateLineTool: () => setTool(WHITEBOARD_TOOLS.LINE),
+    enableDrawing: () => setTool(WHITEBOARD_TOOLS.PENCIL),
+    disableDrawing: () => setTool(WHITEBOARD_TOOLS.SELECT),
+    toggleDrawing: () =>
+      setTool(
+        activeToolRef.current === WHITEBOARD_TOOLS.PENCIL
+          ? WHITEBOARD_TOOLS.SELECT
+          : WHITEBOARD_TOOLS.PENCIL
+      ),
+    setBrushColor: (color) => {
+      strokeColorRef.current = color;
+      setBrushColor(fabricCanvasRef.current, color);
+    },
+    setBrushWidth: (width) => {
+      strokeWidthRef.current = Number(width);
+      setBrushWidth(fabricCanvasRef.current, width);
+    },
     clearCanvas: () => {
       clearCanvas(fabricCanvasRef.current);
       onClearRef.current?.();

@@ -17,6 +17,30 @@ function WhiteboardToolbar({ tools }) {
         Pencil
       </button>
 
+      <button
+        type="button"
+        className="whiteboard-toolbar__button"
+        onClick={tools.activateRectangleTool}
+      >
+        Rectangle
+      </button>
+
+      <button
+        type="button"
+        className="whiteboard-toolbar__button"
+        onClick={tools.activateCircleTool}
+      >
+        Circle
+      </button>
+
+      <button
+        type="button"
+        className="whiteboard-toolbar__button"
+        onClick={tools.activateLineTool}
+      >
+        Line
+      </button>
+
       <label className="whiteboard-toolbar__control">
         <span>Color</span>
         <input
