@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Circle, Line, Rect } from "fabric";
+import { Circle, Line, Rect, Textbox } from "fabric";
 import createCanvas from "../features/whiteboard/fabric/createCanvas";
 import resizeCanvas from "../features/whiteboard/fabric/resizeCanvas";
 import {
@@ -124,6 +124,15 @@ function useFabricCanvas({
       onObjectModifiedRef.current?.(object);
     };
 
+    const handleTextChanged = (e) => {
+      if (isApplyingRemote.current || !e.target) {
+        return;
+      }
+
+      const object = serializeObject(e.target);
+      onObjectModifiedRef.current?.(object);
+    };
+
     const handleKeyDown = (event) => {
       const isDeleteKey = event.key === "Delete" || event.key === "Backspace";
       const targetTagName = event.target?.tagName;
@@ -147,6 +156,40 @@ function useFabricCanvas({
 
     const handleMouseDown = (event) => {
       const tool = activeToolRef.current;
+      if (
+        tool === WHITEBOARD_TOOLS.TEXT &&
+        !shapeDraftRef.current
+      ) {
+        const pointer = getPointerPosition(fabricCanvas, event);
+        const text = new Textbox("", {
+          objectId: createObjectId(),
+          left: pointer.x,
+          top: pointer.y,
+          width: 180,
+          fontSize: 24,
+          fill: strokeColorRef.current,
+          editable: true,
+          selectable: true,
+          evented: true,
+          hasControls: true,
+          hasBorders: true,
+          lockMovementX: false,
+          lockMovementY: false,
+          lockRotation: true,
+          lockScalingX: false,
+          lockScalingY: false,
+        });
+
+        fabricCanvas.add(text);
+        setTool(WHITEBOARD_TOOLS.SELECT);
+        fabricCanvas.setActiveObject(text);
+        text.enterEditing(event.e);
+        text.hiddenTextarea?.focus();
+        fabricCanvas.requestRenderAll();
+        onObjectCreatedRef.current?.(serializeObject(text));
+        return;
+      }
+
       if (
         tool !== WHITEBOARD_TOOLS.RECTANGLE &&
         tool !== WHITEBOARD_TOOLS.CIRCLE &&
@@ -254,6 +297,7 @@ function useFabricCanvas({
  
     fabricCanvas.on("path:created", handlePathCreated);
     fabricCanvas.on("object:modified", handleObjectModified);
+    fabricCanvas.on("text:changed", handleTextChanged);
     fabricCanvas.on("mouse:down", handleMouseDown);
     fabricCanvas.on("mouse:move", handleMouseMove);
     fabricCanvas.on("mouse:up", handleMouseUp);
@@ -265,6 +309,7 @@ function useFabricCanvas({
       window.removeEventListener("keydown", handleKeyDown);
       fabricCanvas.off("path:created", handlePathCreated);
       fabricCanvas.off("object:modified", handleObjectModified);
+      fabricCanvas.off("text:changed", handleTextChanged);
       fabricCanvas.off("mouse:down", handleMouseDown);
       fabricCanvas.off("mouse:move", handleMouseMove);
       fabricCanvas.off("mouse:up", handleMouseUp);
@@ -404,6 +449,7 @@ function useFabricCanvas({
     activateRectangleTool: () => setTool(WHITEBOARD_TOOLS.RECTANGLE),
     activateCircleTool: () => setTool(WHITEBOARD_TOOLS.CIRCLE),
     activateLineTool: () => setTool(WHITEBOARD_TOOLS.LINE),
+    activateTextTool: () => setTool(WHITEBOARD_TOOLS.TEXT),
     enableDrawing: () => setTool(WHITEBOARD_TOOLS.PENCIL),
     disableDrawing: () => setTool(WHITEBOARD_TOOLS.SELECT),
     toggleDrawing: () =>

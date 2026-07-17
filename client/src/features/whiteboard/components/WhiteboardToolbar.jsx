@@ -41,6 +41,14 @@ function WhiteboardToolbar({ tools }) {
         Line
       </button>
 
+      <button
+        type="button"
+        className="whiteboard-toolbar__button"
+        onClick={tools.activateTextTool}
+      >
+        Text
+      </button>
+
       <label className="whiteboard-toolbar__control">
         <span>Color</span>
         <input

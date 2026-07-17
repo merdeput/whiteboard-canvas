@@ -1,4 +1,4 @@
-import { Circle, Line, Path, Rect } from "fabric";
+import { Circle, Line, Path, Rect, Textbox } from "fabric";
 
 const SERIALIZED_PROPS = [
   "left",
@@ -31,6 +31,21 @@ const SERIALIZED_PROPS = [
   "y1",
   "x2",
   "y2",
+  "text",
+  "fontSize",
+  "fontFamily",
+  "fontWeight",
+  "fontStyle",
+  "textAlign",
+  "underline",
+  "linethrough",
+  "overline",
+  "charSpacing",
+  "lineHeight",
+  "backgroundColor",
+  "textBackgroundColor",
+  "direction",
+  "paintFirst",
 ];
 
 export function createObjectId() {
@@ -109,6 +124,8 @@ function buildObject(type, props, pathData) {
       return new Circle(props);
     case "line":
       return new Line([props.x1, props.y1, props.x2, props.y2], props);
+    case "textbox":
+      return new Textbox(props.text || "", props);
     default:
       return null;
   }

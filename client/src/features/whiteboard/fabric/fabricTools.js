@@ -6,6 +6,7 @@ export const WHITEBOARD_TOOLS = Object.freeze({
   RECTANGLE: "RECTANGLE",
   CIRCLE: "CIRCLE",
   LINE: "LINE",
+  TEXT: "TEXT",
 });
 
 function ensureBrush(canvas) {
