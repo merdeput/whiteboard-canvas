@@ -4,14 +4,6 @@ function WhiteboardToolbar({ tools }) {
       <button
         type="button"
         className="whiteboard-toolbar__button"
-        onClick={tools.activateSelectionTool}
-      >
-        Select
-      </button>
-
-      <button
-        type="button"
-        className="whiteboard-toolbar__button"
         onClick={tools.activateDrawingTool}
       >
         Pencil

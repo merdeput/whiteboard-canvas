@@ -1,7 +1,6 @@
 import { PencilBrush } from "fabric";
 
 export const WHITEBOARD_TOOLS = Object.freeze({
-  SELECT: "SELECT",
   PENCIL: "PENCIL",
   RECTANGLE: "RECTANGLE",
   CIRCLE: "CIRCLE",
@@ -15,18 +14,18 @@ function ensureBrush(canvas) {
   }
 }
 
-function setObjectsSelectable(canvas, selectable) {
+function setObjectsInteractive(canvas, interactive) {
   for (const object of canvas.getObjects()) {
     object.set({
-      selectable,
-      evented: selectable,
-      hasControls: selectable,
-      hasBorders: selectable,
-      lockMovementX: !selectable,
-      lockMovementY: !selectable,
+      selectable: interactive,
+      evented: interactive,
+      hasControls: interactive,
+      hasBorders: interactive,
+      lockMovementX: !interactive,
+      lockMovementY: !interactive,
       lockRotation: true,
-      lockScalingX: !selectable,
-      lockScalingY: !selectable,
+      lockScalingX: !interactive,
+      lockScalingY: !interactive,
     });
   }
 }
@@ -40,20 +39,14 @@ export function setCanvasTool(canvas, tool) {
       canvas.isDrawingMode = true;
       canvas.selection = false;
       canvas.discardActiveObject();
-      setObjectsSelectable(canvas, false);
-      break;
-
-    case WHITEBOARD_TOOLS.SELECT:
-      canvas.isDrawingMode = false;
-      canvas.selection = true;
-      setObjectsSelectable(canvas, true);
+      setObjectsInteractive(canvas, false);
       break;
 
     default:
       canvas.isDrawingMode = false;
       canvas.selection = false;
       canvas.discardActiveObject();
-      setObjectsSelectable(canvas, false);
+      setObjectsInteractive(canvas, false);
       break;
   }
 
@@ -72,29 +65,6 @@ export function setBrushWidth(canvas, width) {
 
   ensureBrush(canvas);
   canvas.freeDrawingBrush.width = Number(width);
-}
-
-export function deleteSelectedObjects(canvas) {
-  if (!canvas) return [];
-
-  const activeObjects = canvas.getActiveObjects();
-
-  if (!activeObjects.length) {
-    return [];
-  }
-
-  const deletedObjectIds = activeObjects
-    .map((object) => object.objectId)
-    .filter(Boolean);
-
-  canvas.discardActiveObject();
-
-  for (const object of activeObjects) {
-    canvas.remove(object);
-  }
-
-  canvas.requestRenderAll();
-  return deletedObjectIds;
 }
 
 export function clearCanvas(canvas) {

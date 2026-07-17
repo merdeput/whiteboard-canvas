@@ -12,36 +12,29 @@ import {
   setBrushWidth,
   setCanvasTool,
   WHITEBOARD_TOOLS,
-  deleteSelectedObjects,
   clearCanvas,
 } from "../features/whiteboard/fabric/fabricTools";
 
 function useFabricCanvas({
   onObjectCreated,
-  onObjectModified,
-  onObjectsDeleted,
   onClear,
 } = {}) {
-  const [activeTool, setActiveTool] = useState(WHITEBOARD_TOOLS.SELECT);
+  const [activeTool, setActiveTool] = useState(WHITEBOARD_TOOLS.PENCIL);
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
-  const activeToolRef = useRef(WHITEBOARD_TOOLS.SELECT);
+  const activeToolRef = useRef(WHITEBOARD_TOOLS.PENCIL);
   const shapeDraftRef = useRef(null);
   const strokeColorRef = useRef("#000000");
   const strokeWidthRef = useRef(3);
   const isApplyingRemote = useRef(false);
   const onObjectCreatedRef = useRef(onObjectCreated);
-  const onObjectModifiedRef = useRef(onObjectModified);
-  const onObjectsDeletedRef = useRef(onObjectsDeleted);
   const onClearRef = useRef(onClear);
 
   useEffect(() => {
     onObjectCreatedRef.current = onObjectCreated;
-    onObjectModifiedRef.current = onObjectModified;
-    onObjectsDeletedRef.current = onObjectsDeleted;
     onClearRef.current = onClear;
-  }, [onObjectCreated, onObjectModified, onObjectsDeleted, onClear]);
+  }, [onObjectCreated, onClear]);
 
   const setTool = (tool) => {
     activeToolRef.current = tool;
@@ -89,7 +82,7 @@ function useFabricCanvas({
 
     const fabricCanvas = createCanvas(canvasRef.current);
     fabricCanvasRef.current = fabricCanvas;
-    setTool(WHITEBOARD_TOOLS.SELECT);
+    setTool(WHITEBOARD_TOOLS.PENCIL);
 
     const handleResize = () => {
       resizeCanvas(fabricCanvas, containerRef.current);
@@ -115,42 +108,9 @@ function useFabricCanvas({
       onObjectCreatedRef.current?.(object);
     };
 
-    const handleObjectModified = (e) => {
-      if (isApplyingRemote.current || !e.target) {
-        return;
-      }
-
-      const object = serializeObject(e.target);
-      onObjectModifiedRef.current?.(object);
-    };
-
     const handleTextChanged = (e) => {
       if (isApplyingRemote.current || !e.target) {
         return;
-      }
-
-      const object = serializeObject(e.target);
-      onObjectModifiedRef.current?.(object);
-    };
-
-    const handleKeyDown = (event) => {
-      const isDeleteKey = event.key === "Delete" || event.key === "Backspace";
-      const targetTagName = event.target?.tagName;
-      const isEditableTarget =
-        event.target?.isContentEditable ||
-        targetTagName === "INPUT" ||
-        targetTagName === "TEXTAREA" ||
-        targetTagName === "SELECT";
-
-      if (!isDeleteKey || isEditableTarget) {
-        return;
-      }
-
-      const deletedObjectIds = deleteSelectedObjects(fabricCanvas);
-
-      if (deletedObjectIds.length) {
-        event.preventDefault();
-        onObjectsDeletedRef.current?.(deletedObjectIds);
       }
     };
 
@@ -181,7 +141,7 @@ function useFabricCanvas({
         });
 
         fabricCanvas.add(text);
-        setTool(WHITEBOARD_TOOLS.SELECT);
+        setTool(WHITEBOARD_TOOLS.TEXT);
         fabricCanvas.setActiveObject(text);
         text.enterEditing(event.e);
         text.hiddenTextarea?.focus();
@@ -291,24 +251,18 @@ function useFabricCanvas({
       } else {
         onObjectCreatedRef.current?.(serializeObject(draft.shape));
       }
-
-      setTool(WHITEBOARD_TOOLS.SELECT);
     };
  
     fabricCanvas.on("path:created", handlePathCreated);
-    fabricCanvas.on("object:modified", handleObjectModified);
     fabricCanvas.on("text:changed", handleTextChanged);
     fabricCanvas.on("mouse:down", handleMouseDown);
     fabricCanvas.on("mouse:move", handleMouseMove);
     fabricCanvas.on("mouse:up", handleMouseUp);
-    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       resizeObserver?.disconnect();
       window.removeEventListener("resize", handleResize);
-      window.removeEventListener("keydown", handleKeyDown);
       fabricCanvas.off("path:created", handlePathCreated);
-      fabricCanvas.off("object:modified", handleObjectModified);
       fabricCanvas.off("text:changed", handleTextChanged);
       fabricCanvas.off("mouse:down", handleMouseDown);
       fabricCanvas.off("mouse:move", handleMouseMove);
@@ -357,65 +311,6 @@ function useFabricCanvas({
     }
   };
 
-  const applyRemoteObjectUpdate = (data) => {
-    const canvas = fabricCanvasRef.current;
-    const objectId = data?.object?.objectId;
-
-    if (!canvas || !objectId) {
-      return;
-    }
-
-    const existingObject = canvas.getObjects().find((object) => object.objectId === objectId);
-
-    if (!existingObject) {
-      return;
-    }
-
-    isApplyingRemote.current = true;
-
-    try {
-      const updatedObject = deserializeObject(data.object);
-
-      if (!updatedObject) {
-        return;
-      }
-
-      canvas.remove(existingObject);
-      canvas.add(updatedObject);
-      syncCanvasToolMode(canvas);
-      canvas.requestRenderAll();
-    } finally {
-      isApplyingRemote.current = false;
-    }
-  };
-
-  const applyRemoteObjectDelete = (data) => {
-    const canvas = fabricCanvasRef.current;
-    const objectIds = data?.objectIds || [];
-
-    if (!canvas || !objectIds.length) {
-      return;
-    }
-
-    isApplyingRemote.current = true;
-
-    try {
-      for (const objectId of objectIds) {
-        const existingObject = canvas.getObjects().find((object) => object.objectId === objectId);
-
-        if (existingObject) {
-          canvas.remove(existingObject);
-        }
-      }
-
-      canvas.discardActiveObject();
-      syncCanvasToolMode(canvas);
-      canvas.requestRenderAll();
-    } finally {
-      isApplyingRemote.current = false;
-    }
-  };
-
   const loadWhiteboardState = (state) => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) {
@@ -445,19 +340,13 @@ function useFabricCanvas({
   const tools = {
     activeTool,
     activateDrawingTool: () => setTool(WHITEBOARD_TOOLS.PENCIL),
-    activateSelectionTool: () => setTool(WHITEBOARD_TOOLS.SELECT),
     activateRectangleTool: () => setTool(WHITEBOARD_TOOLS.RECTANGLE),
     activateCircleTool: () => setTool(WHITEBOARD_TOOLS.CIRCLE),
     activateLineTool: () => setTool(WHITEBOARD_TOOLS.LINE),
     activateTextTool: () => setTool(WHITEBOARD_TOOLS.TEXT),
     enableDrawing: () => setTool(WHITEBOARD_TOOLS.PENCIL),
-    disableDrawing: () => setTool(WHITEBOARD_TOOLS.SELECT),
-    toggleDrawing: () =>
-      setTool(
-        activeToolRef.current === WHITEBOARD_TOOLS.PENCIL
-          ? WHITEBOARD_TOOLS.SELECT
-          : WHITEBOARD_TOOLS.PENCIL
-      ),
+    disableDrawing: () => setTool(activeToolRef.current),
+    toggleDrawing: () => setTool(activeToolRef.current),
     setBrushColor: (color) => {
       strokeColorRef.current = color;
       setBrushColor(fabricCanvasRef.current, color);
@@ -471,8 +360,6 @@ function useFabricCanvas({
       onClearRef.current?.();
     },
     addRemoteObject,
-    applyRemoteObjectUpdate,
-    applyRemoteObjectDelete,
     applyCanvasClear,
     loadWhiteboardState,
   };

@@ -15,34 +15,6 @@ function handleDrawObject(socket, payload = {}) {
   });
 }
 
-function handleUpdateObject(socket, payload = {}) {
-  const { roomId, object } = payload;
-  const updatedObject = whiteboardService.updateObjectInWhiteboard({
-    socket,
-    roomId,
-    object,
-  });
-
-  socket.to(roomId).emit(socketEvents.WHITEBOARD_OBJECT_UPDATED, {
-    roomId,
-    object: updatedObject,
-  });
-}
-
-function handleDeleteObjects(socket, payload = {}) {
-  const { roomId, objectIds } = payload;
-  const deletedObjectIds = whiteboardService.deleteObjectsFromWhiteboard({
-    socket,
-    roomId,
-    objectIds,
-  });
-
-  socket.to(roomId).emit(socketEvents.WHITEBOARD_OBJECTS_DELETED, {
-    roomId,
-    objectIds: deletedObjectIds,
-  });
-}
-
 function handleClearWhiteboard(socket, payload = {}) {
   const { roomId } = payload;
 
@@ -63,8 +35,6 @@ function emitWhiteboardState(socket, roomId) {
 
 module.exports = {
   handleDrawObject,
-  handleUpdateObject,
-  handleDeleteObjects,
   handleClearWhiteboard,
   emitWhiteboardState,
 };
