@@ -1,6 +1,6 @@
 import { useParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import RoomHeader from "../features/room/components/RoomHeader";
 import WhiteboardStatus from "../features/whiteboard/components/WhiteboardStatus";
 import WhiteboardToolbar from "../features/whiteboard/components/WhiteboardToolbar";
@@ -40,10 +40,13 @@ function RoomPage() {
     onRemoteClear: whiteboard.tools.applyCanvasClear,
     onWhiteboardState: whiteboard.tools.loadWhiteboardState,
   });
-  sendObjectRef.current = sendObject;
-  sendObjectUpdateRef.current = sendObjectUpdate;
-  sendObjectsDeleteRef.current = sendObjectsDelete;
-  sendClearRef.current = sendClear;
+
+  useEffect(() => {
+    sendObjectRef.current = sendObject;
+    sendObjectUpdateRef.current = sendObjectUpdate;
+    sendObjectsDeleteRef.current = sendObjectsDelete;
+    sendClearRef.current = sendClear;
+  }, [sendObject, sendObjectUpdate, sendObjectsDelete, sendClear]);
 
   let connectionStatus = "Disconnected";
 

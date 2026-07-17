@@ -1,53 +1,92 @@
-import { Path } from "fabric";
+import { Circle, Line, Path, Rect } from "fabric";
 
-const PATH_PROPS = [
-  'left', 'top', 'width', 'height', 'fill', 'stroke', 'strokeWidth',
-  'strokeDashArray', 'strokeLineCap', 'strokeLineJoin', 'strokeMiterLimit',
-  'scaleX', 'scaleY', 'angle', 'flipX', 'flipY', 'opacity', 'shadow',
-  'visible', 'fillRule', 'globalCompositeOperation', 'skewX', 'skewY',
-  'originX', 'originY',
+const SERIALIZED_PROPS = [
+  "left",
+  "top",
+  "width",
+  "height",
+  "fill",
+  "stroke",
+  "strokeWidth",
+  "strokeDashArray",
+  "strokeLineCap",
+  "strokeLineJoin",
+  "strokeMiterLimit",
+  "scaleX",
+  "scaleY",
+  "angle",
+  "flipX",
+  "flipY",
+  "opacity",
+  "shadow",
+  "visible",
+  "fillRule",
+  "globalCompositeOperation",
+  "skewX",
+  "skewY",
+  "originX",
+  "originY",
+  "radius",
+  "x1",
+  "y1",
+  "x2",
+  "y2",
 ];
 
-function ensureObjectId(path) {
-  if (path.objectId) {
-    return path.objectId;
+export function createObjectId() {
+  return (
+    globalThis.crypto?.randomUUID?.() ||
+    `object_${Date.now()}_${Math.random().toString(36).slice(2)}`
+  );
+}
+
+export function ensureObjectId(object) {
+  if (object.objectId) {
+    return object.objectId;
   }
 
-  const objectId =
-    globalThis.crypto?.randomUUID?.() ||
-    `object_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const objectId = createObjectId();
 
-  if (typeof path.set === "function") {
-    path.set("objectId", objectId);
+  if (typeof object.set === "function") {
+    object.set("objectId", objectId);
   } else {
-    path.objectId = objectId;
+    object.objectId = objectId;
   }
 
   return objectId;
 }
 
-export function serializePath(path) {
+function getSerializedProps(object) {
+  const props = {};
+
+  for (const prop of SERIALIZED_PROPS) {
+    if (object[prop] !== undefined) {
+      props[prop] =
+        prop === "shadow" && object.shadow?.toObject
+          ? object.shadow.toObject()
+          : object[prop];
+    }
+  }
+
+  return props;
+}
+
+export function serializeObject(object) {
   const data = {
-    type: 'path',
-    objectId: ensureObjectId(path),
-    pathData: (path.path || []).map((cmd) => cmd.slice()),
+    type: object.type,
+    objectId: ensureObjectId(object),
+    props: getSerializedProps(object),
   };
 
-  for (const prop of PATH_PROPS) {
-    if (path[prop] !== undefined) {
-      data[prop] = prop === 'shadow' && path.shadow?.toObject
-        ? path.shadow.toObject()
-        : path[prop];
-    }
+  if (object.type === "path") {
+    data.pathData = (object.path || []).map((cmd) => cmd.slice());
   }
 
   return data;
 }
 
-export function deserializePath(data) {
-  const { pathData, type, ...options } = data;
-  return new Path(pathData, {
-    ... options,
+function getInteractiveDefaults() {
+  return {
     selectable: false,
     evented: false,
     hasControls: true,
@@ -57,5 +96,48 @@ export function deserializePath(data) {
     lockRotation: true,
     lockScalingX: false,
     lockScalingY: false,
-  });
+  };
 }
+
+function buildObject(type, props, pathData) {
+  switch (type) {
+    case "path":
+      return new Path(pathData || [], props);
+    case "rect":
+      return new Rect(props);
+    case "circle":
+      return new Circle(props);
+    case "line":
+      return new Line([props.x1, props.y1, props.x2, props.y2], props);
+    default:
+      return null;
+  }
+}
+
+export function deserializeObject(data) {
+  const type = data?.type;
+  const props = data?.props || {};
+  const legacyProps = { ...data };
+  delete legacyProps.type;
+  delete legacyProps.pathData;
+  delete legacyProps.props;
+
+  const object = buildObject(
+    type,
+    {
+      ...(data?.props ? props : legacyProps),
+      ...getInteractiveDefaults(),
+    },
+    data?.pathData
+  );
+
+  if (!object) {
+    return null;
+  }
+
+  ensureObjectId(object);
+  return object;
+}
+
+export const serializePath = serializeObject;
+export const deserializePath = deserializeObject;

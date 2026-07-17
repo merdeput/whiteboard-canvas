@@ -25,11 +25,19 @@ export default function useRoomSocket({
   const onRemoteClearRef = useRef(onRemoteClear);
   const onWhiteboardStateRef = useRef(onWhiteboardState);
 
-  onRemoteObjectRef.current = onRemoteObject;
-  onRemoteObjectUpdateRef.current = onRemoteObjectUpdate;
-  onRemoteObjectsDeleteRef.current = onRemoteObjectsDelete;
-  onRemoteClearRef.current = onRemoteClear;
-  onWhiteboardStateRef.current = onWhiteboardState;
+  useEffect(() => {
+    onRemoteObjectRef.current = onRemoteObject;
+    onRemoteObjectUpdateRef.current = onRemoteObjectUpdate;
+    onRemoteObjectsDeleteRef.current = onRemoteObjectsDelete;
+    onRemoteClearRef.current = onRemoteClear;
+    onWhiteboardStateRef.current = onWhiteboardState;
+  }, [
+    onRemoteObject,
+    onRemoteObjectUpdate,
+    onRemoteObjectsDelete,
+    onRemoteClear,
+    onWhiteboardState,
+  ]);
 
   useEffect(() => {
     if (!token || !roomId) return;

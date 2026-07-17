@@ -6,7 +6,6 @@ export const WHITEBOARD_TOOLS = Object.freeze({
   RECTANGLE: "RECTANGLE",
   CIRCLE: "CIRCLE",
   LINE: "LINE",
-  TEXT: "TEXT",
 });
 
 function ensureBrush(canvas) {
@@ -60,34 +59,6 @@ export function setCanvasTool(canvas, tool) {
   canvas.requestRenderAll();
 }
 
-export function activateDrawingTool(canvas) {
-  setCanvasTool(canvas, WHITEBOARD_TOOLS.PENCIL);
-}
-
-export function activateSelectionTool(canvas) {
-  setCanvasTool(canvas, WHITEBOARD_TOOLS.SELECT);
-}
-
-export function enableDrawing(canvas) {
-  activateDrawingTool(canvas);
-}
-
-export function disableDrawing(canvas) {
-  if (!canvas) return;
-
-  activateSelectionTool(canvas);
-}
-
-export function toggleDrawing(canvas) {
-  if (!canvas) return;
-
-  if (canvas.isDrawingMode) {
-    activateSelectionTool(canvas);
-  } else {
-    activateDrawingTool(canvas);
-  }
-}
-
 export function setBrushColor(canvas, color) {
   if (!canvas) return;
 
@@ -130,6 +101,5 @@ export function clearCanvas(canvas) {
 
   canvas.clear();
   canvas.backgroundColor = "#ffffff";
-  canvas.selection = true;
   canvas.requestRenderAll();
 }

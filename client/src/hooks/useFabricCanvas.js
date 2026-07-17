@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Circle, Line, Rect } from "fabric";
 import createCanvas from "../features/whiteboard/fabric/createCanvas";
 import resizeCanvas from "../features/whiteboard/fabric/resizeCanvas";
-import { serializePath, deserializePath } from "../features/whiteboard/fabric/fabricSerializer";
 import {
-  activateDrawingTool,
-  activateSelectionTool,
-  enableDrawing,
-  disableDrawing,
-  toggleDrawing,
+  createObjectId,
+  deserializeObject,
+  serializeObject,
+} from "../features/whiteboard/fabric/fabricSerializer";
+import {
   setBrushColor,
   setBrushWidth,
   setCanvasTool,
@@ -36,10 +35,13 @@ function useFabricCanvas({
   const onObjectModifiedRef = useRef(onObjectModified);
   const onObjectsDeletedRef = useRef(onObjectsDeleted);
   const onClearRef = useRef(onClear);
-  onObjectCreatedRef.current = onObjectCreated;
-  onObjectModifiedRef.current = onObjectModified;
-  onObjectsDeletedRef.current = onObjectsDeleted;
-  onClearRef.current = onClear;
+
+  useEffect(() => {
+    onObjectCreatedRef.current = onObjectCreated;
+    onObjectModifiedRef.current = onObjectModified;
+    onObjectsDeletedRef.current = onObjectsDeleted;
+    onClearRef.current = onClear;
+  }, [onObjectCreated, onObjectModified, onObjectsDeleted, onClear]);
 
   const setTool = (tool) => {
     activeToolRef.current = tool;
@@ -52,18 +54,14 @@ function useFabricCanvas({
     return pointer;
   };
 
-  const createObjectId = () =>
-    globalThis.crypto?.randomUUID?.() ||
-    `object_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
   const updateShapeGeometry = (draft, pointer) => {
     if (draft.tool === WHITEBOARD_TOOLS.RECTANGLE) {
-    draft.shape.set({
-      left: Math.min(draft.originX, pointer.x),
-      top: Math.min(draft.originY, pointer.y),
-      width: Math.abs(pointer.x - draft.originX),
-      height: Math.abs(pointer.y - draft.originY),
-    });
+      draft.shape.set({
+        left: Math.min(draft.originX, pointer.x),
+        top: Math.min(draft.originY, pointer.y),
+        width: Math.abs(pointer.x - draft.originX),
+        height: Math.abs(pointer.y - draft.originY),
+      });
     } else if (draft.tool === WHITEBOARD_TOOLS.CIRCLE) {
       const dx = pointer.x - draft.originX;
       const dy = pointer.y - draft.originY;
@@ -78,6 +76,10 @@ function useFabricCanvas({
     }
 
     draft.shape.setCoords();
+  };
+
+  const syncCanvasToolMode = (canvas) => {
+    setCanvasTool(canvas, activeToolRef.current);
   };
 
   useEffect(() => {
@@ -109,16 +111,16 @@ function useFabricCanvas({
       if (isApplyingRemote.current || !e.path) {
         return;
       }
-      const object = serializePath(e.path);
+      const object = serializeObject(e.path);
       onObjectCreatedRef.current?.(object);
     };
 
     const handleObjectModified = (e) => {
-      if (isApplyingRemote.current || !e.target || e.target.type !== "path") {
+      if (isApplyingRemote.current || !e.target) {
         return;
       }
 
-      const object = serializePath(e.target);
+      const object = serializeObject(e.target);
       onObjectModifiedRef.current?.(object);
     };
 
@@ -215,10 +217,6 @@ function useFabricCanvas({
       }
 
       const pointer = getPointerPosition(fabricCanvas, event);
-      console.log({
-          origin: shapeDraftRef.current.originX,
-          pointer: pointer.x,
-      });
       updateShapeGeometry(draft, pointer);
       fabricCanvas.requestRenderAll();
     };
@@ -247,6 +245,8 @@ function useFabricCanvas({
 
       if (isEmptyRectangle || isEmptyCircle || isEmptyLine) {
         fabricCanvas.remove(draft.shape);
+      } else {
+        onObjectCreatedRef.current?.(serializeObject(draft.shape));
       }
 
       setTool(WHITEBOARD_TOOLS.SELECT);
@@ -280,13 +280,20 @@ function useFabricCanvas({
     }
 
     isApplyingRemote.current = true;
-    const object = deserializePath(data.object);
-    canvas.add(object);
-    if (!canvas.isDrawingMode) {
-      activateSelectionTool(canvas);
+
+    try {
+      const object = deserializeObject(data.object);
+
+      if (!object) {
+        return;
+      }
+
+      canvas.add(object);
+      syncCanvasToolMode(canvas);
+      canvas.requestRenderAll();
+    } finally {
+      isApplyingRemote.current = false;
     }
-    canvas.requestRenderAll();
-    isApplyingRemote.current = false;
   };
 
   const applyCanvasClear = () => {
@@ -296,8 +303,13 @@ function useFabricCanvas({
     }
 
     isApplyingRemote.current = true;
-    clearCanvas(canvas);
-    isApplyingRemote.current = false;
+
+    try {
+      clearCanvas(canvas);
+      syncCanvasToolMode(canvas);
+    } finally {
+      isApplyingRemote.current = false;
+    }
   };
 
   const applyRemoteObjectUpdate = (data) => {
@@ -315,10 +327,21 @@ function useFabricCanvas({
     }
 
     isApplyingRemote.current = true;
-    existingObject.set(data.object);
-    existingObject.setCoords();
-    canvas.requestRenderAll();
-    isApplyingRemote.current = false;
+
+    try {
+      const updatedObject = deserializeObject(data.object);
+
+      if (!updatedObject) {
+        return;
+      }
+
+      canvas.remove(existingObject);
+      canvas.add(updatedObject);
+      syncCanvasToolMode(canvas);
+      canvas.requestRenderAll();
+    } finally {
+      isApplyingRemote.current = false;
+    }
   };
 
   const applyRemoteObjectDelete = (data) => {
@@ -331,17 +354,21 @@ function useFabricCanvas({
 
     isApplyingRemote.current = true;
 
-    for (const objectId of objectIds) {
-      const existingObject = canvas.getObjects().find((object) => object.objectId === objectId);
+    try {
+      for (const objectId of objectIds) {
+        const existingObject = canvas.getObjects().find((object) => object.objectId === objectId);
 
-      if (existingObject) {
-        canvas.remove(existingObject);
+        if (existingObject) {
+          canvas.remove(existingObject);
+        }
       }
-    }
 
-    canvas.discardActiveObject();
-    canvas.requestRenderAll();
-    isApplyingRemote.current = false;
+      canvas.discardActiveObject();
+      syncCanvasToolMode(canvas);
+      canvas.requestRenderAll();
+    } finally {
+      isApplyingRemote.current = false;
+    }
   };
 
   const loadWhiteboardState = (state) => {
@@ -351,24 +378,23 @@ function useFabricCanvas({
     }
 
     isApplyingRemote.current = true;
-    canvas.clear();
-    canvas.backgroundColor = "#ffffff";
 
-    for (const object of state?.objects || []) {
-      if (object?.type !== "path") {
-        continue;
+    try {
+      clearCanvas(canvas);
+
+      for (const object of state?.objects || []) {
+        const canvasObject = deserializeObject(object);
+
+        if (canvasObject) {
+          canvas.add(canvasObject);
+        }
       }
 
-      const canvasObject = deserializePath(object);
-      canvas.add(canvasObject);
+      syncCanvasToolMode(canvas);
+      canvas.requestRenderAll();
+    } finally {
+      isApplyingRemote.current = false;
     }
-
-    if (!canvas.isDrawingMode) {
-      activateSelectionTool(canvas);
-    }
-
-    canvas.requestRenderAll();
-    isApplyingRemote.current = false;
   };
 
   const tools = {

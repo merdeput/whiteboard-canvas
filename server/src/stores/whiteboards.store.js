@@ -156,11 +156,15 @@ function validateAddObject({
   }
 
   if (!object || typeof object !== "object") {
-    throw new Error("Path payload is required");
+    throw new Error("Whiteboard object payload is required");
   }
 
-  if (object.type !== "path") {
-    throw new Error("Only path objects are supported");
+  if (!object.type || typeof object.type !== "string") {
+    throw new Error("Whiteboard object type is required");
+  }
+
+  if (!object.objectId) {
+    throw new Error("Whiteboard object ID is required");
   }
 }
 
