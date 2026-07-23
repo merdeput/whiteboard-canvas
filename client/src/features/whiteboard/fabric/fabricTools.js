@@ -2,6 +2,7 @@ import { PencilBrush } from "fabric";
 
 export const WHITEBOARD_TOOLS = Object.freeze({
   PENCIL: "PENCIL",
+  ERASER: "ERASER",
   RECTANGLE: "RECTANGLE",
   CIRCLE: "CIRCLE",
   LINE: "LINE",
@@ -35,6 +36,7 @@ export function setCanvasTool(canvas, tool) {
 
   switch (tool) {
     case WHITEBOARD_TOOLS.PENCIL:
+    case WHITEBOARD_TOOLS.ERASER:
       ensureBrush(canvas);
       canvas.isDrawingMode = true;
       canvas.selection = false;

@@ -36,10 +36,26 @@ function useFabricCanvas({
     onClearRef.current = onClear;
   }, [onObjectCreated, onClear]);
 
+  const syncBrushStyle = (canvas, tool = activeToolRef.current) => {
+    if (!canvas) {
+      return;
+    }
+
+    setBrushWidth(canvas, strokeWidthRef.current);
+
+    if (tool === WHITEBOARD_TOOLS.ERASER) {
+      setBrushColor(canvas, "#ffffff");
+      return;
+    }
+
+    setBrushColor(canvas, strokeColorRef.current);
+  };
+
   const setTool = (tool) => {
     activeToolRef.current = tool;
     setActiveTool(tool);
     setCanvasTool(fabricCanvasRef.current, tool);
+    syncBrushStyle(fabricCanvasRef.current, tool);
   };
 
   const getPointerPosition = (canvas, event) => {
@@ -82,7 +98,10 @@ function useFabricCanvas({
 
     const fabricCanvas = createCanvas(canvasRef.current);
     fabricCanvasRef.current = fabricCanvas;
-    setTool(WHITEBOARD_TOOLS.PENCIL);
+    activeToolRef.current = WHITEBOARD_TOOLS.PENCIL;
+    setActiveTool(WHITEBOARD_TOOLS.PENCIL);
+    setCanvasTool(fabricCanvas, WHITEBOARD_TOOLS.PENCIL);
+    syncBrushStyle(fabricCanvas, WHITEBOARD_TOOLS.PENCIL);
 
     const handleResize = () => {
       resizeCanvas(fabricCanvas, containerRef.current);
@@ -340,6 +359,7 @@ function useFabricCanvas({
   const tools = {
     activeTool,
     activateDrawingTool: () => setTool(WHITEBOARD_TOOLS.PENCIL),
+    activateEraserTool: () => setTool(WHITEBOARD_TOOLS.ERASER),
     activateRectangleTool: () => setTool(WHITEBOARD_TOOLS.RECTANGLE),
     activateCircleTool: () => setTool(WHITEBOARD_TOOLS.CIRCLE),
     activateLineTool: () => setTool(WHITEBOARD_TOOLS.LINE),
@@ -349,7 +369,9 @@ function useFabricCanvas({
     toggleDrawing: () => setTool(activeToolRef.current),
     setBrushColor: (color) => {
       strokeColorRef.current = color;
-      setBrushColor(fabricCanvasRef.current, color);
+      if (activeToolRef.current !== WHITEBOARD_TOOLS.ERASER) {
+        setBrushColor(fabricCanvasRef.current, color);
+      }
     },
     setBrushWidth: (width) => {
       strokeWidthRef.current = Number(width);

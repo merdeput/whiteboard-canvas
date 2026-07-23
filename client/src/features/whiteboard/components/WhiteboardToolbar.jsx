@@ -12,6 +12,14 @@ function WhiteboardToolbar({ tools }) {
       <button
         type="button"
         className="whiteboard-toolbar__button"
+        onClick={tools.activateEraserTool}
+      >
+        Eraser
+      </button>
+
+      <button
+        type="button"
+        className="whiteboard-toolbar__button"
         onClick={tools.activateRectangleTool}
       >
         Rectangle
