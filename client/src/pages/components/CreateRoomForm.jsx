@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 
 import { createRoom } from "../../api/room.api"
 
-import "../../styles/DashBoardPage.css"
+import "../../styles/RoomAccessForms.css"
 
 function CreateRoomForm() {
   const navigate = useNavigate();

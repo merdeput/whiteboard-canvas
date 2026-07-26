@@ -6,7 +6,6 @@ const storedToken = localStorage.getItem("token");
 const initialState = {
     user: storedUser,
     token: storedToken,
-    hasSession: !!storedToken,
     isAuthenticated: storedUser?.role === "member" && !!storedToken,
 };
 
@@ -19,7 +18,6 @@ const authSlice = createSlice({
         loginSuccess(state, action) {
             state.user = action.payload.user;
             state.token = action.payload.token;
-            state.hasSession = true;
             state.isAuthenticated = action.payload.user?.role === "member";
 
             localStorage.setItem("token", action.payload.token);
@@ -29,7 +27,6 @@ const authSlice = createSlice({
         logout(state) {
             state.user = null;
             state.token = null;
-            state.hasSession = false;
             state.isAuthenticated = false;
 
             localStorage.removeItem("token");

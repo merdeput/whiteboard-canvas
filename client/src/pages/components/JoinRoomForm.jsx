@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../../styles/DashBoardPage.css"
+import "../../styles/RoomAccessForms.css"
 
 function JoinRoomForm() {
   const navigate = useNavigate();
