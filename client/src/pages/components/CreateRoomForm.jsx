@@ -35,7 +35,6 @@ function CreateRoomForm() {
 
       navigate(`/room/${room.id}`, {
         state: {
-          enterCanvas: true,
           password: password.trim(),
         },
       });

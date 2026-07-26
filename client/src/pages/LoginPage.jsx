@@ -50,7 +50,6 @@ function LoginPage() {
             Back Home
           </Link>
           <h1>Login</h1>
-          <p>Return to the collaboration-first home flow and create rooms there.</p>
         </div>
 
         <form onSubmit={handleSubmit}>

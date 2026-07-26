@@ -4,9 +4,13 @@ const { generateId } = require("../utils/utils");
 const roomsStore = require("../stores/rooms.store");
 const whiteboardsStore = require("../stores/whiteboards.store");
 
-async function createRoom({ ownerId, password }) {
+async function createRoom({ ownerId, ownerRole, password }) {
   if (!ownerId) {
     throw createAppError(401, "Unauthorized");
+  }
+
+  if (ownerRole !== "member") {
+    throw createAppError(403, "Only registered members can create rooms");
   }
 
   let passwordHash = null;

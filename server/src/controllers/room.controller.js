@@ -5,6 +5,7 @@ async function createRoom(req, res, next) {
     const room = await roomService.createRoom({
       password: req.body.password,
       ownerId: req.user.id,
+      ownerRole: req.user.role,
     });
 
     return res.status(201).json({ room });

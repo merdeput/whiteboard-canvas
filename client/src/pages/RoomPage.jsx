@@ -1,4 +1,4 @@
-import { useParams, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useEffect, useRef } from "react";
 import RoomHeader from "../features/room/components/RoomHeader";
@@ -11,13 +11,11 @@ import useRoomSocket from "../hooks/useRoomSocket";
 import "../styles/RoomPage.css";
 import "../styles/Whiteboard.css";
 
-function RoomPage() {
+function RoomPage({ sessionPassword = "", onSessionError }) {
   const { roomId } = useParams();
   const token = useSelector((state) => state.auth.token);
   const currentRoom = useSelector((state) => state.room.currentRoom);
   const { connected, loading, error } = useSelector((state) => state.whiteboard);
-  const location = useLocation();
-  const password = location.state?.password;
 
   const sendObjectRef = useRef(() => {});
   const sendClearRef = useRef(() => {});
@@ -29,10 +27,11 @@ function RoomPage() {
   const { sendObject, sendClear } = useRoomSocket({
     token,
     roomId,
-    password,
+    password: sessionPassword,
     onRemoteObject: whiteboard.tools.addRemoteObject,
     onRemoteClear: whiteboard.tools.applyCanvasClear,
     onWhiteboardState: whiteboard.tools.loadWhiteboardState,
+    onSessionError,
   });
 
   useEffect(() => {
@@ -50,7 +49,7 @@ function RoomPage() {
     connectionStatus = "Connected";
   }
 
-  const roomName = currentRoom?.name || "Untitled Room";
+  const roomName = currentRoom?.id || `Room ${roomId}`;
 
   return (
     <div className="room-container">

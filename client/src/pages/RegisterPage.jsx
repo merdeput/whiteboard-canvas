@@ -41,7 +41,6 @@ function RegisterPage() {
             Back Home
           </Link>
           <h1>Register</h1>
-          <p>Create an account, then return home to create your room.</p>
         </div>
 
         <form onSubmit={handleSubmit}>
