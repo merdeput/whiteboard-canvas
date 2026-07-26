@@ -3,10 +3,18 @@ const whiteboardsStore = require("../stores/whiteboards.store");
 
 function addObjectToWhiteboard({ socket, roomId, object }) {
   const room = roomsStore.findRoomById(roomId);
+  const identity = socket?.identity;
+
+  const storedObject = {
+    ...object,
+    creatorId: identity?.id,
+    creatorDisplayName: identity?.displayName,
+    creatorRole: identity?.role,
+  };
 
   return whiteboardsStore.addObjectToWhiteboard({
     roomId,
-    object,
+    object: storedObject,
     roomExists: Boolean(room),
     socketJoinedRoom: Boolean(socket?.rooms?.has(roomId)),
   });

@@ -7,7 +7,14 @@ Room shape:
   ownerId,
   passwordHash,
   whiteboardObjects,
-  participants,
+  participants: [
+    {
+      socketId,
+      id,
+      displayName,
+      role,
+    }
+  ],
   createdAt,
   updatedAt
 }
@@ -26,8 +33,48 @@ function getAllRooms() {
   return Array.from(rooms.values());
 }
 
+function addParticipant(roomId, participant) {
+  const room = findRoomById(roomId);
+
+  if (!room) {
+    return null;
+  }
+
+  room.participants = room.participants.filter(
+    (existingParticipant) => existingParticipant.socketId !== participant.socketId
+  );
+  room.participants.push(participant);
+  room.updatedAt = new Date().toISOString();
+  return room;
+}
+
+function removeParticipantBySocketId(socketId) {
+  const affectedRooms = [];
+
+  for (const room of rooms.values()) {
+    const nextParticipants = room.participants.filter(
+      (participant) => participant.socketId !== socketId
+    );
+
+    if (nextParticipants.length !== room.participants.length) {
+      room.participants = nextParticipants;
+      room.updatedAt = new Date().toISOString();
+      affectedRooms.push(room);
+    }
+  }
+
+  return affectedRooms;
+}
+
+function deleteRoom(roomId) {
+  return rooms.delete(roomId);
+}
+
 module.exports = {
   createRoom,
   findRoomById,
   getAllRooms,
+  addParticipant,
+  removeParticipantBySocketId,
+  deleteRoom,
 };

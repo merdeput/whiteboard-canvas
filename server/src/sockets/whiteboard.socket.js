@@ -6,7 +6,9 @@ function registerWhiteboardSocketHandlers(io, socket){
     try {
       const { roomId } = payload;
       whiteboardController.handleDrawObject(socket, payload);
-      console.log(`[draw-object] ${socket.user.username} -> ${roomId}`);
+      console.log(
+        `[draw-object] ${socket.identity.displayName} (${socket.identity.role}) -> ${roomId}`
+      );
     } catch (error) {
       socket.emit(socketEvents.ROOM_ERROR, {
         message: error.message || "Failed to process whiteboard object event",
@@ -18,7 +20,9 @@ function registerWhiteboardSocketHandlers(io, socket){
     try {
       const { roomId } = payload;
       whiteboardController.handleClearWhiteboard(socket, payload);
-      console.log(`[clear] ${socket.user.username} -> ${roomId}`);
+      console.log(
+        `[clear] ${socket.identity.displayName} (${socket.identity.role}) -> ${roomId}`
+      );
     } catch (error) {
       socket.emit(socketEvents.ROOM_ERROR, {
         message: error.message || "Failed to clear whiteboard",

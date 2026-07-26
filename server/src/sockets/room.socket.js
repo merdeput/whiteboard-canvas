@@ -4,7 +4,6 @@ const roomService = require("../services/room.service");
 
 function registerRoomSocketHandlers(io, socket){
   socket.on(socketEvents.ROOM_JOIN, async (payload = {}) => {
-    console.log("ROOM_JOIN payload:", payload);
     try {
       const { roomId, password } = payload;
 
@@ -14,12 +13,17 @@ function registerRoomSocketHandlers(io, socket){
       });
 
       socket.join(room.id);
+      const roomWithParticipant = roomService.addParticipant({
+        roomId: room.id,
+        socketId: socket.id,
+        identity: socket.identity,
+      });
 
       socket.emit(socketEvents.ROOM_JOINED, {
-        room: roomService.sanitizeRoom(room),
+        room: roomService.sanitizeRoom(roomWithParticipant),
       });
       console.log(
-        `[room] ${socket.user.username} joined ${room.id}`
+        `[room] ${socket.identity.displayName} (${socket.identity.role}) joined ${room.id}`
       );
       whiteboardController.emitWhiteboardState(socket, room.id);
     } catch (error) {

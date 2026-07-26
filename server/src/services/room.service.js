@@ -82,6 +82,53 @@ async function verifyRoomAccess({ roomId, password }) {
   return room;
 }
 
+function addParticipant({ roomId, socketId, identity }) {
+  if (!roomId) {
+    throw createAppError(400, "Room ID is required");
+  }
+
+  if (!socketId) {
+    throw createAppError(400, "Socket ID is required");
+  }
+
+  if (!identity?.id || !identity?.displayName || !identity?.role) {
+    throw createAppError(400, "Session identity is required");
+  }
+
+  const room = roomsStore.findRoomById(roomId);
+  if (!room) {
+    throw createAppError(404, "Room not found");
+  }
+
+  roomsStore.addParticipant(roomId, {
+    socketId,
+    id: identity.id,
+    displayName: identity.displayName,
+    role: identity.role,
+  });
+
+  return room;
+}
+
+function handleSocketDisconnect(socketId) {
+  if (!socketId) {
+    return [];
+  }
+
+  const affectedRooms = roomsStore.removeParticipantBySocketId(socketId);
+  const deletedRoomIds = [];
+
+  for (const room of affectedRooms) {
+    if (room.participants.length === 0) {
+      roomsStore.deleteRoom(room.id);
+      whiteboardsStore.deleteWhiteboard(room.id);
+      deletedRoomIds.push(room.id);
+    }
+  }
+
+  return deletedRoomIds;
+}
+
 function sanitizeRoom(room) {
   return {
     id: room.id,
@@ -103,5 +150,7 @@ module.exports = {
   createRoom,
   getRoomMetadata,
   verifyRoomAccess,
+  addParticipant,
+  handleSocketDisconnect,
   sanitizeRoom,
 };

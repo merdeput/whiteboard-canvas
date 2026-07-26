@@ -25,6 +25,10 @@ function getOrCreateWhiteboard(roomId) {
   return getWhiteboard(roomId) || createWhiteboard(roomId);
 }
 
+function deleteWhiteboard(roomId) {
+  return whiteboards.delete(roomId);
+}
+
 function addObjectToWhiteboard({
   roomId,
   object,
@@ -112,6 +116,7 @@ module.exports = {
   getWhiteboard,
   createWhiteboard,
   getOrCreateWhiteboard,
+  deleteWhiteboard,
   addObjectToWhiteboard,
   getWhiteboardState,
   clearWhiteboard,
