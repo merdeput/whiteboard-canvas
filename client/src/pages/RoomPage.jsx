@@ -1,19 +1,26 @@
-import { useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef } from "react";
+import { logoutSession } from "../api/auth.api";
+import { logout } from "../features/auth/authSlice";
 import RoomHeader from "../features/room/components/RoomHeader";
 import WhiteboardStatus from "../features/whiteboard/components/WhiteboardStatus";
 import WhiteboardToolbar from "../features/whiteboard/components/WhiteboardToolbar";
 import WhiteboardCanvas from "../features/whiteboard/components/WhiteboardCanvas";
 import useFabricCanvas from "../hooks/useFabricCanvas";
 import useRoomSocket from "../hooks/useRoomSocket";
+import { disconnectSocket } from "../socket/socketClient";
+import { clearStoredRoomSession } from "../utils/sessionStorage";
 
 import "../styles/RoomPage.css";
 import "../styles/Whiteboard.css";
 
 function RoomPage({ sessionPassword = "", onSessionError }) {
   const { roomId } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
+  const user = useSelector((state) => state.auth.user);
   const currentRoom = useSelector((state) => state.room.currentRoom);
   const { connected, loading, error } = useSelector((state) => state.whiteboard);
 
@@ -39,6 +46,24 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
     sendClearRef.current = sendClear;
   }, [sendObject, sendClear]);
 
+  async function handleLogout() {
+    try {
+      await logoutSession();
+    } catch {
+      // Local teardown is the important step for stateless JWT sessions.
+    } finally {
+      disconnectSocket();
+      clearStoredRoomSession(roomId);
+      dispatch(logout());
+      navigate("/", {
+        replace: true,
+        state: {
+          banner: "Session ended.",
+        },
+      });
+    }
+  }
+
   let connectionStatus = "Disconnected";
 
   if (error) {
@@ -57,6 +82,8 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
         roomName={roomName}
         roomId={roomId}
         connectionStatus={connectionStatus}
+        sessionLabel={user?.displayName || null}
+        onLogout={handleLogout}
       />
 
       <main className="room-content">

@@ -27,6 +27,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   gap: 24px;
+  align-items: center;
 }
 
 .room-header__primary {
@@ -61,6 +62,16 @@
   font-weight: 600;
   color: #1a1a1e;
   word-break: break-word;
+}
+
+.room-header__logout {
+  border: 1px solid rgba(26, 26, 30, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  color: #1a1a1e;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .room-content {

@@ -27,6 +27,7 @@
 }
 
 .home-nav-link,
+.home-nav-button,
 .home-user-pill {
   border-radius: 999px;
   padding: 10px 16px;
@@ -34,12 +35,18 @@
   background: rgba(255, 255, 255, 0.68);
   backdrop-filter: blur(14px);
   font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .home-nav-link--primary {
   background: #1c68f2;
   border-color: #1c68f2;
   color: white;
+}
+
+.home-nav-button {
+  cursor: pointer;
+  color: #18212f;
 }
 
 .home-banner {

@@ -14,3 +14,8 @@ export async function createGuestSession(data) {
     const response = await api.post("/guest", data);
     return response.data;
 }
+
+export async function logoutSession() {
+    const response = await api.post("/auth/logout");
+    return response.data;
+}

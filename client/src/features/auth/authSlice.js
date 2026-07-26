@@ -1,13 +1,38 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { isTokenExpired } from "../../utils/sessionStorage";
 
-const storedUser = JSON.parse(localStorage.getItem("user") || "null");
-const storedToken = localStorage.getItem("token");
+function readStoredUser() {
+    try {
+        return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+        localStorage.removeItem("user");
+        return null;
+    }
+}
 
-const initialState = {
-    user: storedUser,
-    token: storedToken,
-    isAuthenticated: storedUser?.role === "member" && !!storedToken,
-};
+function getInitialAuthState() {
+    const storedUser = readStoredUser();
+    const storedToken = localStorage.getItem("token");
+
+    if (!storedToken || isTokenExpired(storedToken)) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        return {
+            user: null,
+            token: null,
+            isAuthenticated: false,
+        };
+    }
+
+    return {
+        user: storedUser,
+        token: storedToken,
+        isAuthenticated: storedUser?.role === "member",
+    };
+}
+
+const initialState = getInitialAuthState();
 
 const authSlice = createSlice({
     name: "auth",

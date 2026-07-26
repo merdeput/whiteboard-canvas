@@ -1,4 +1,4 @@
-function RoomHeader({ roomName, roomId, connectionStatus }) {
+function RoomHeader({ roomName, roomId, connectionStatus, sessionLabel, onLogout }) {
   return (
     <header className="room-header">
       <div className="room-header__primary">
@@ -16,6 +16,19 @@ function RoomHeader({ roomName, roomId, connectionStatus }) {
           <span className="room-header__label">Connection Status</span>
           <span className="room-header__value">{connectionStatus}</span>
         </div>
+
+        {sessionLabel ? (
+          <div className="room-header__item">
+            <span className="room-header__label">Session</span>
+            <span className="room-header__value">{sessionLabel}</span>
+          </div>
+        ) : null}
+
+        {onLogout ? (
+          <button type="button" className="room-header__logout" onClick={onLogout}>
+            Logout
+          </button>
+        ) : null}
       </div>
     </header>
   );
