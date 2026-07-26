@@ -5,8 +5,9 @@ Room shape:
 {
   id,
   ownerId,
-  publicity,
   passwordHash,
+  whiteboardObjects,
+  participants,
   createdAt,
   updatedAt
 }

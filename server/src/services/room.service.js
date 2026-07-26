@@ -4,28 +4,14 @@ const { generateId } = require("../utils/utils");
 const roomsStore = require("../stores/rooms.store");
 const whiteboardsStore = require("../stores/whiteboards.store");
 
-async function createRoom({ name, ownerId, publicity = "public", password }) {
+async function createRoom({ ownerId, password }) {
   if (!ownerId) {
     throw createAppError(401, "Unauthorized");
   }
 
-  if (!name || !name.trim()) {
-    throw createAppError(400, "Room name is required");
-  }
-
-  if (!["public", "private"].includes(publicity)) {
-    throw createAppError(400, "Publicity must be either 'public' or 'private'");
-  }
-
   let passwordHash = null;
 
-  if (publicity === "private") {
-    if (!password || !password.trim()) {
-      throw createAppError(400, "Password is required for private rooms");
-    }
-
-    passwordHash = await bcrypt.hash(password.trim(), 10);
-  } else if (password && password.trim()) {
+  if (password && password.trim()) {
     passwordHash = await bcrypt.hash(password.trim(), 10);
   }
 
@@ -33,10 +19,10 @@ async function createRoom({ name, ownerId, publicity = "public", password }) {
 
   const room = roomsStore.createRoom({
     id: generateId("room"),
-    name: name.trim(),
     ownerId,
-    publicity,
     passwordHash,
+    whiteboardObjects: [],
+    participants: [],
     createdAt: now,
     updatedAt: now,
   });
@@ -47,17 +33,23 @@ async function createRoom({ name, ownerId, publicity = "public", password }) {
   return sanitizeRoom(room);
 }
 
-function getRoomById(roomId) {
+function getRoomMetadata(roomId) {
   if (!roomId) {
     throw createAppError(400, "Room ID is required");
   }
 
   const room = roomsStore.findRoomById(roomId);
   if (!room) {
-    throw createAppError(404, "Room not found");
+    return {
+      exists: false,
+      requiresPassword: false,
+    };
   }
 
-  return sanitizeRoom(room);
+  return {
+    exists: true,
+    requiresPassword: Boolean(room.passwordHash),
+  };
 }
 
 async function verifyRoomAccess({ roomId, password }) {
@@ -70,7 +62,7 @@ async function verifyRoomAccess({ roomId, password }) {
     throw createAppError(404, "Room not found");
   }
 
-  const hasPassword = Boolean(room.passwordHash) || room.publicity === "private";
+  const hasPassword = Boolean(room.passwordHash);
 
   if (hasPassword) {
     if (!password || !password.trim()) {
@@ -93,10 +85,9 @@ async function verifyRoomAccess({ roomId, password }) {
 function sanitizeRoom(room) {
   return {
     id: room.id,
-    name: room.name,
     ownerId: room.ownerId,
-    publicity: room.publicity,
-    hasPassword: !!room.passwordHash,
+    requiresPassword: !!room.passwordHash,
+    participants: [...room.participants],
     createdAt: room.createdAt,
     updatedAt: room.updatedAt,
   };
@@ -110,7 +101,7 @@ function createAppError(statusCode, message) {
 
 module.exports = {
   createRoom,
-  getRoomById,
+  getRoomMetadata,
   verifyRoomAccess,
   sanitizeRoom,
 };

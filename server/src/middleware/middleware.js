@@ -1,5 +1,6 @@
 // VerifyJWT
 const { verifyAccessToken } = require("../utils/utils");
+const { createSessionIdentity } = require("../utils/sessionIdentity");
 
 function verifyJwt(req, res, next) {
   try {
@@ -14,10 +15,13 @@ function verifyJwt(req, res, next) {
     const token = authHeader.split(" ")[1];
     const payload = verifyAccessToken(token);
 
-    req.user = {
-      id: payload.sub,
-      username: payload.username,
-    };
+    const identity = createSessionIdentity({
+      id: payload.id,
+      displayName: payload.displayName,
+      role: payload.role,
+    });
+    req.identity = identity;
+    req.user = identity;
 
     next();
   } catch (error) {

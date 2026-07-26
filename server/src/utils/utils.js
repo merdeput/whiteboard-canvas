@@ -2,9 +2,9 @@
 const jwt = require("jsonwebtoken");
 const env = require("../config/env");
 
-function signAccessToken(payload) {
+function signAccessToken(payload, options = {}) {
   return jwt.sign(payload, env.jwtSecret, {
-    expiresIn: env.jwtExpiresIn,
+    expiresIn: options.expiresIn || env.jwtExpiresIn,
   });
 }
 

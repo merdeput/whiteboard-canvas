@@ -1,6 +1,12 @@
 const bcrypt = require("bcrypt");
 const { generateId, signAccessToken } = require("../utils/utils");
 const usersStore = require("../stores/users.store");
+const {
+  createGuestIdentity,
+  createMemberIdentity,
+} = require("../utils/sessionIdentity");
+
+const GUEST_TOKEN_EXPIRES_IN = "24h";
 
 async function register({ username, password }) {
   if (!username || !password) {
@@ -21,10 +27,11 @@ async function register({ username, password }) {
     createdAt: new Date().toISOString(),
   });
 
-  const token = signAccessToken({
-    sub: user.id,
-    username: user.username,
+  const identity = createMemberIdentity({
+    id: user.id,
+    displayName: user.username,
   });
+  const token = signAccessToken(identity);
 
   return {
     user: sanitizeUser(user),
@@ -47,10 +54,11 @@ async function login({ username, password }) {
     throw createAppError(401, "Invalid username or password");
   }
 
-  const token = signAccessToken({
-    sub: user.id,
-    username: user.username,
+  const identity = createMemberIdentity({
+    id: user.id,
+    displayName: user.username,
   });
+  const token = signAccessToken(identity);
 
   return {
     user: sanitizeUser(user),
@@ -58,12 +66,42 @@ async function login({ username, password }) {
   };
 }
 
+function issueGuestSession({ displayName }) {
+  const guestDisplayName = normalizeGuestDisplayName(displayName);
+  const identity = createGuestIdentity({
+    id: generateId("guest"),
+    displayName: guestDisplayName,
+  });
+
+  return {
+    identity,
+    token: signAccessToken(identity, {
+      expiresIn: GUEST_TOKEN_EXPIRES_IN,
+    }),
+  };
+}
+
+function logout() {
+  return {
+    success: true,
+  };
+}
+
 function sanitizeUser(user) {
   return {
     id: user.id,
-    username: user.username,
+    displayName: user.username,
+    role: "member",
     createdAt: user.createdAt,
   };
+}
+
+function normalizeGuestDisplayName(displayName) {
+  if (displayName && displayName.trim()) {
+    return displayName.trim();
+  }
+
+  return `Guest-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
 function createAppError(statusCode, message) {
@@ -75,4 +113,6 @@ function createAppError(statusCode, message) {
 module.exports = {
     register,
     login,
+    issueGuestSession,
+    logout,
 };
