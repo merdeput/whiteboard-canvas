@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 import { createRoom } from "../../api/room.api"
 
@@ -7,22 +8,20 @@ import "../../styles/DashBoardPage.css"
 
 function CreateRoomForm() {
   const navigate = useNavigate();
-
-  const [name, setName] = useState("");
-
-  const [publicity, setPublicity] = useState("public");
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
   const [password, setPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
 
   const [error, setError] = useState("");
+  const [showLoginRequired, setShowLoginRequired] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
 
-    if (publicity === "private" && !password.trim()) {
-      setError("Password is required for private rooms");
+    if (!isAuthenticated) {
+      setShowLoginRequired(true);
       return;
     }
 
@@ -31,12 +30,15 @@ function CreateRoomForm() {
 
     try {
       const { room } = await createRoom({
-        name,
-        publicity,
-        password,
+        password: password.trim(),
       });
 
-      navigate(`/room/${room.id}`);
+      navigate(`/room/${room.id}`, {
+        state: {
+          enterCanvas: true,
+          password: password.trim(),
+        },
+      });
     } catch (err) {
       setError(
         err.response?.data?.message || "Failed to create room"
@@ -49,26 +51,14 @@ function CreateRoomForm() {
   return (
     <div className="create-room-card">
       <h2>Create Room</h2>
+      <p className="create-room-card__copy">
+        Login to create a room.
+      </p>
 
       <form onSubmit={handleSubmit}>
         <input
-          placeholder="Room name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-
-        <select
-          value={publicity}
-          onChange={(e) => setPublicity(e.target.value)}
-        >
-          <option value="public">Public</option>
-          <option value="private">Private</option>
-        </select>
-
-        <input
           type="password"
-          placeholder={publicity === "private" ? "Password (required)" : "Password (optional)"}
+          placeholder="Password (optional)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -79,6 +69,18 @@ function CreateRoomForm() {
 
         {error && <p>{error}</p>}
       </form>
+
+      {showLoginRequired ? (
+        <div className="create-room-card__modal" role="dialog" aria-modal="true">
+          <div className="create-room-card__modal-card">
+            <h3>Login required to create a room.</h3>
+            <p>Open the login screen in the top navigation, then come back here to create it.</p>
+            <button type="button" onClick={() => setShowLoginRequired(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

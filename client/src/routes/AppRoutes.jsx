@@ -1,8 +1,9 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
+import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
-import RoomPage from "../pages/RoomPage";
+import RoomEntryPage from "../pages/RoomEntryPage";
 import DashboardPage from "../pages/DashBoardPage";
 
 import ProtectedRoute from "./ProtectedRoute";
@@ -11,10 +12,7 @@ function AppRoutes() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route
-                path="/"
-                element={<Navigate to="/login" replace />}
-                />
+                <Route path="/" element={<HomePage />} />
 
                 <Route path="/login" element={<LoginPage />} />
 
@@ -25,11 +23,7 @@ function AppRoutes() {
 
                 <Route
                 path="/room/:roomId"
-                element={
-                    <ProtectedRoute>
-                    <RoomPage />
-                    </ProtectedRoute>
-                }
+                element={<RoomEntryPage />}
                 />
                 <Route
                 path="/dashboard"

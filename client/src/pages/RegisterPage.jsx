@@ -36,7 +36,13 @@ function RegisterPage() {
   return (
     <div className="register-container">
       <div className="register-card">
-        <h1>Register</h1>
+        <div className="register-card__header">
+          <Link to="/" className="register-card__back">
+            Back Home
+          </Link>
+          <h1>Register</h1>
+          <p>Create an account, then return home to create your room.</p>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <input
@@ -63,7 +69,7 @@ function RegisterPage() {
 
         {error && <p>{error}</p>}
 
-        <Link to="/login">
+        <Link to="/login" className="register-card__link">
           Login
         </Link>
       </div>

@@ -1,0 +1,111 @@
+.home-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(112, 185, 255, 0.24), transparent 28%),
+    radial-gradient(circle at top right, rgba(122, 214, 180, 0.2), transparent 24%),
+    linear-gradient(180deg, #f6f8fb 0%, #ecf2f8 100%);
+  color: #18212f;
+}
+
+.home-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 40px;
+}
+
+.home-brand {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.home-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-nav-link,
+.home-user-pill {
+  border-radius: 999px;
+  padding: 10px 16px;
+  border: 1px solid rgba(24, 33, 47, 0.12);
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(14px);
+  font-weight: 600;
+}
+
+.home-nav-link--primary {
+  background: #1c68f2;
+  border-color: #1c68f2;
+  color: white;
+}
+
+.home-banner {
+  width: min(1040px, calc(100% - 48px));
+  margin: 0 auto;
+  border-radius: 18px;
+  padding: 14px 18px;
+  background: #fff5d6;
+  border: 1px solid #f0d07d;
+  color: #624600;
+  font-weight: 600;
+}
+
+.home-main {
+  width: min(1200px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 48px 0 72px;
+  display: grid;
+  grid-template-columns: minmax(260px, 1.1fr) minmax(380px, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.home-hero {
+  padding: 28px 8px 0;
+}
+
+.home-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1c68f2;
+  margin-bottom: 18px;
+}
+
+.home-hero h1 {
+  font-size: clamp(2.8rem, 5vw, 4.8rem);
+  line-height: 0.96;
+  max-width: 10ch;
+}
+
+.home-copy {
+  margin-top: 22px;
+  max-width: 42ch;
+  color: #566173;
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+
+.home-actions {
+  display: grid;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .home-topbar {
+    padding: 20px 24px;
+  }
+
+  .home-main {
+    grid-template-columns: 1fr;
+    padding-top: 24px;
+  }
+
+  .home-hero {
+    padding-top: 0;
+  }
+}

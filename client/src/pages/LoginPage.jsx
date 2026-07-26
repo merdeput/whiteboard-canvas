@@ -34,7 +34,7 @@ function LoginPage() {
         })
       );
 
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       setError(
         err.response?.data?.message || "Login failed"
@@ -45,7 +45,13 @@ function LoginPage() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>Login</h1>
+        <div className="login-card__header">
+          <Link to="/" className="login-card__back">
+            Back Home
+          </Link>
+          <h1>Login</h1>
+          <p>Return to the collaboration-first home flow and create rooms there.</p>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <input
@@ -72,7 +78,7 @@ function LoginPage() {
 
         {error && <p>{error}</p>}
 
-        <Link to="/register">
+        <Link to="/register" className="login-card__link">
           Register
         </Link>
       </div>

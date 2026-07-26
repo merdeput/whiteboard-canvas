@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Circle, Line, Rect, Textbox } from "fabric";
 import createCanvas from "../features/whiteboard/fabric/createCanvas";
 import resizeCanvas from "../features/whiteboard/fabric/resizeCanvas";
@@ -36,7 +36,7 @@ function useFabricCanvas({
     onClearRef.current = onClear;
   }, [onObjectCreated, onClear]);
 
-  const syncBrushStyle = (canvas, tool = activeToolRef.current) => {
+  const syncBrushStyle = useCallback((canvas, tool = activeToolRef.current) => {
     if (!canvas) {
       return;
     }
@@ -49,14 +49,18 @@ function useFabricCanvas({
     }
 
     setBrushColor(canvas, strokeColorRef.current);
-  };
+  }, []);
 
-  const setTool = (tool) => {
+  const applyTool = useCallback((canvas, tool) => {
     activeToolRef.current = tool;
     setActiveTool(tool);
-    setCanvasTool(fabricCanvasRef.current, tool);
-    syncBrushStyle(fabricCanvasRef.current, tool);
-  };
+    setCanvasTool(canvas, tool);
+    syncBrushStyle(canvas, tool);
+  }, [syncBrushStyle]);
+
+  const setTool = useCallback((tool) => {
+    applyTool(fabricCanvasRef.current, tool);
+  }, [applyTool]);
 
   const getPointerPosition = (canvas, event) => {
     const pointer = canvas.getViewportPoint(event.e);
@@ -98,10 +102,7 @@ function useFabricCanvas({
 
     const fabricCanvas = createCanvas(canvasRef.current);
     fabricCanvasRef.current = fabricCanvas;
-    activeToolRef.current = WHITEBOARD_TOOLS.PENCIL;
-    setActiveTool(WHITEBOARD_TOOLS.PENCIL);
-    setCanvasTool(fabricCanvas, WHITEBOARD_TOOLS.PENCIL);
-    syncBrushStyle(fabricCanvas, WHITEBOARD_TOOLS.PENCIL);
+    applyTool(fabricCanvas, WHITEBOARD_TOOLS.PENCIL);
 
     const handleResize = () => {
       resizeCanvas(fabricCanvas, containerRef.current);
@@ -289,7 +290,7 @@ function useFabricCanvas({
       fabricCanvas.dispose();
       fabricCanvasRef.current = null;
     };
-  }, []);
+  }, [applyTool, setTool]);
 
   const addRemoteObject = (data) => {
     const canvas = fabricCanvasRef.current;

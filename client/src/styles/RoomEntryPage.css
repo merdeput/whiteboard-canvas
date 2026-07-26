@@ -1,0 +1,95 @@
+.room-entry-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(28, 104, 242, 0.12), transparent 42%),
+    linear-gradient(180deg, #eef4fb 0%, #f8fbff 100%);
+  display: grid;
+  place-items: center;
+  padding: 32px;
+}
+
+.room-entry-shell {
+  width: min(720px, 100%);
+}
+
+.room-entry-panel {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(24, 33, 47, 0.08);
+  border-radius: 28px;
+  padding: 36px;
+  box-shadow: 0 24px 80px rgba(22, 35, 61, 0.12);
+}
+
+.room-entry-kicker {
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #1c68f2;
+  margin-bottom: 14px;
+}
+
+.room-entry-panel h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.02;
+  max-width: 12ch;
+}
+
+.room-entry-copy {
+  margin-top: 14px;
+  color: #5c677a;
+  max-width: 46ch;
+}
+
+.room-entry-form {
+  margin-top: 28px;
+  display: grid;
+  gap: 18px;
+}
+
+.room-entry-field {
+  display: grid;
+  gap: 8px;
+}
+
+.room-entry-field span {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.room-entry-field input {
+  border: 1px solid #cdd8e7;
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: white;
+}
+
+.room-entry-field input:disabled {
+  background: #f4f7fb;
+  color: #97a3b6;
+}
+
+.room-entry-field input:focus {
+  outline: none;
+  border-color: #1c68f2;
+  box-shadow: 0 0 0 4px rgba(28, 104, 242, 0.12);
+}
+
+.room-entry-form button {
+  border: none;
+  border-radius: 999px;
+  padding: 14px 18px;
+  background: #1c68f2;
+  color: white;
+  font-weight: 700;
+}
+
+.room-entry-form button:disabled {
+  opacity: 0.65;
+}
+
+.room-entry-error {
+  color: #b42318;
+  font-size: 0.95rem;
+}

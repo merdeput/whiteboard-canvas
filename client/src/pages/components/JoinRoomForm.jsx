@@ -1,12 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { getRoom, verifyRoomAccess } from "../../api/room.api";
 import "../../styles/DashBoardPage.css"
 
 function JoinRoomForm() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const [roomId, setRoomId] = useState("");
 
@@ -21,17 +18,13 @@ function JoinRoomForm() {
     setLoading(true);
     setError("");
     try {
-      const { room } = await getRoom(roomId);
-
-      if ((room.publicity === "private" || room.hasPassword) && !password.trim()) {
-        setError("Password is required for this private room");
+      if (!roomId.trim()) {
+        setError("Room ID is required.");
         return;
       }
 
-      await verifyRoomAccess(room.id, password);
-
-      navigate(`/room/${room.id}`, {
-        state: { password },
+      navigate(`/room/${roomId.trim()}`, {
+        state: { password: password.trim() },
       });
     } catch (err) {
       setError(
@@ -45,6 +38,9 @@ function JoinRoomForm() {
   return (
     <div className="join-room-card">
       <h2>Join Room</h2>
+      <p className="join-room-card__copy">
+        Enter the Room ID.
+      </p>
 
       <form onSubmit={handleSubmit}>
         <input
