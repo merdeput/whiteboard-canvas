@@ -1,4 +1,3 @@
-const roomsStore = require("../stores/rooms.store");
 const whiteboardsStore = require("../stores/whiteboards.store");
 
 function getOrCreate(roomId) {
@@ -13,43 +12,36 @@ function addObject({ roomId, object, socketJoinedRoom }) {
   return whiteboardsStore.addObjectToWhiteboard({
     roomId,
     object,
-    roomExists: Boolean(roomsStore.findRoomById(roomId)),
     socketJoinedRoom,
   });
 }
 
-function updateObject({ roomId, object, socketJoinedRoom }) {
+function updateObject({ roomId, object, roomExists, socketJoinedRoom }) {
   return whiteboardsStore.updateObjectInWhiteboard({
     roomId,
     object,
-    roomExists: Boolean(roomsStore.findRoomById(roomId)),
+    roomExists,
     socketJoinedRoom,
   });
 }
 
-function deleteObjects({ roomId, objectIds, socketJoinedRoom }) {
+function deleteObjects({ roomId, objectIds, roomExists, socketJoinedRoom }) {
   return whiteboardsStore.deleteObjectsFromWhiteboard({
     roomId,
     objectIds,
-    roomExists: Boolean(roomsStore.findRoomById(roomId)),
+    roomExists,
     socketJoinedRoom,
   });
 }
 
 function getState(roomId) {
-  const room = roomsStore.findRoomById(roomId);
-
-  if (!room) {
-    throw new Error("Room not found");
-  }
-
   return whiteboardsStore.getWhiteboardState(roomId);
 }
 
-function clear({ roomId, socketJoinedRoom }) {
+function clear({ roomId, roomExists, socketJoinedRoom }) {
   return whiteboardsStore.clearWhiteboard({
     roomId,
-    roomExists: Boolean(roomsStore.findRoomById(roomId)),
+    roomExists,
     socketJoinedRoom,
   });
 }

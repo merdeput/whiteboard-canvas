@@ -29,10 +29,6 @@ function findRoomById(roomId) {
   return rooms.get(roomId) || null;
 }
 
-function getAllRooms() {
-  return Array.from(rooms.values());
-}
-
 function addParticipant(roomId, participant) {
   const room = findRoomById(roomId);
 
@@ -73,7 +69,6 @@ function deleteRoom(roomId) {
 module.exports = {
   createRoom,
   findRoomById,
-  getAllRooms,
   addParticipant,
   removeParticipantBySocketId,
   deleteRoom,

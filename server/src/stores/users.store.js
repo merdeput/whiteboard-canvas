@@ -26,13 +26,8 @@ function findUserByUsername(username) {
   return null;
 }
 
-function getAllUsers() {
-  return Array.from(users.values());
-}
-
 module.exports = {
   createUser,
   findUserById,
   findUserByUsername,
-  getAllUsers,
 };
