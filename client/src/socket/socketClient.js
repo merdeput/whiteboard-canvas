@@ -1,10 +1,6 @@
 import { io } from "socket.io-client";
 let socket = null;
 
-export function getSocket(){
-    return socket;
-}
-
 export function disconnectSocket(){
     if(!socket)
         return;

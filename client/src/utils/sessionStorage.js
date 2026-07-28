@@ -44,10 +44,6 @@ export function clearStoredRoomSession(roomId) {
   localStorage.removeItem(ACTIVE_ROOM_SESSION_KEY);
 }
 
-export function clearStoredGuestDisplayName() {
-  localStorage.removeItem(GUEST_DISPLAY_NAME_KEY);
-}
-
 export function isTokenExpired(token) {
   if (!token) {
     return true;

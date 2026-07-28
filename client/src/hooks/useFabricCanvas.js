@@ -17,6 +17,8 @@ import {
 
 function useFabricCanvas({
   onObjectCreated,
+  onObjectModified,
+  onObjectsDeleted,
   onClear,
 } = {}) {
   const [activeTool, setActiveTool] = useState(WHITEBOARD_TOOLS.PENCIL);
@@ -29,12 +31,16 @@ function useFabricCanvas({
   const strokeWidthRef = useRef(3);
   const isApplyingRemote = useRef(false);
   const onObjectCreatedRef = useRef(onObjectCreated);
+  const onObjectModifiedRef = useRef(onObjectModified);
+  const onObjectsDeletedRef = useRef(onObjectsDeleted);
   const onClearRef = useRef(onClear);
 
   useEffect(() => {
     onObjectCreatedRef.current = onObjectCreated;
+    onObjectModifiedRef.current = onObjectModified;
+    onObjectsDeletedRef.current = onObjectsDeleted;
     onClearRef.current = onClear;
-  }, [onObjectCreated, onClear]);
+  }, [onObjectCreated, onObjectModified, onObjectsDeleted, onClear]);
 
   const syncBrushStyle = useCallback((canvas, tool = activeToolRef.current) => {
     if (!canvas) {
@@ -95,6 +101,50 @@ function useFabricCanvas({
     setCanvasTool(canvas, activeToolRef.current);
   };
 
+  const upsertCanvasObject = (canvas, objectData) => {
+    const updatedObject = deserializeObject(objectData);
+
+    if (!updatedObject) {
+      return false;
+    }
+
+    const existingIndex = canvas
+      .getObjects()
+      .findIndex((object) => object.objectId === objectData.objectId);
+
+    if (existingIndex === -1) {
+      canvas.add(updatedObject);
+      return true;
+    }
+
+    const [existingObject] = canvas.getObjects().slice(existingIndex, existingIndex + 1);
+    canvas.remove(existingObject);
+    canvas.insertAt(existingIndex, updatedObject);
+    return true;
+  };
+
+  const deleteCanvasObjects = (canvas, objectIds) => {
+    const deletedObjectIds = [];
+
+    for (const objectId of objectIds) {
+      const existingObject = canvas.getObjects().find((object) => object.objectId === objectId);
+
+      if (!existingObject) {
+        continue;
+      }
+
+      canvas.remove(existingObject);
+      deletedObjectIds.push(objectId);
+    }
+
+    if (deletedObjectIds.length) {
+      canvas.discardActiveObject();
+      canvas.requestRenderAll();
+    }
+
+    return deletedObjectIds;
+  };
+
   useEffect(() => {
     if (!containerRef.current || !canvasRef.current) {
       return undefined;
@@ -132,6 +182,57 @@ function useFabricCanvas({
       if (isApplyingRemote.current || !e.target) {
         return;
       }
+
+      onObjectModifiedRef.current?.(serializeObject(e.target));
+    };
+
+    const handleTextEditingExited = (e) => {
+      if (isApplyingRemote.current || !e.target) {
+        return;
+      }
+
+      onObjectModifiedRef.current?.(serializeObject(e.target));
+    };
+
+    const handleObjectModified = (e) => {
+      if (isApplyingRemote.current || !e.target?.objectId) {
+        return;
+      }
+
+      onObjectModifiedRef.current?.(serializeObject(e.target));
+    };
+
+    const handleKeyDown = (event) => {
+      if (activeToolRef.current !== WHITEBOARD_TOOLS.TEXT) {
+        return;
+      }
+
+      const isDeleteKey = event.key === "Delete" || event.key === "Backspace";
+      const targetTagName = event.target?.tagName;
+      const isEditableTarget =
+        event.target?.isContentEditable ||
+        targetTagName === "INPUT" ||
+        targetTagName === "TEXTAREA" ||
+        targetTagName === "SELECT";
+
+      if (!isDeleteKey || isEditableTarget) {
+        return;
+      }
+
+      const activeObject = fabricCanvas.getActiveObject();
+
+      if (!activeObject?.objectId || activeObject.isEditing || activeObject.type !== "textbox") {
+        return;
+      }
+
+      const deletedObjectIds = deleteCanvasObjects(fabricCanvas, [activeObject.objectId]);
+
+      if (!deletedObjectIds.length) {
+        return;
+      }
+
+      event.preventDefault();
+      onObjectsDeletedRef.current?.(deletedObjectIds);
     };
 
     const handleMouseDown = (event) => {
@@ -140,6 +241,10 @@ function useFabricCanvas({
         tool === WHITEBOARD_TOOLS.TEXT &&
         !shapeDraftRef.current
       ) {
+        if (event.target?.type === "textbox") {
+          return;
+        }
+
         const pointer = getPointerPosition(fabricCanvas, event);
         const text = new Textbox("", {
           objectId: createObjectId(),
@@ -155,7 +260,7 @@ function useFabricCanvas({
           hasBorders: true,
           lockMovementX: false,
           lockMovementY: false,
-          lockRotation: true,
+          lockRotation: false,
           lockScalingX: false,
           lockScalingY: false,
         });
@@ -275,15 +380,21 @@ function useFabricCanvas({
  
     fabricCanvas.on("path:created", handlePathCreated);
     fabricCanvas.on("text:changed", handleTextChanged);
+    fabricCanvas.on("text:editing:exited", handleTextEditingExited);
+    fabricCanvas.on("object:modified", handleObjectModified);
     fabricCanvas.on("mouse:down", handleMouseDown);
     fabricCanvas.on("mouse:move", handleMouseMove);
     fabricCanvas.on("mouse:up", handleMouseUp);
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       resizeObserver?.disconnect();
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("keydown", handleKeyDown);
       fabricCanvas.off("path:created", handlePathCreated);
       fabricCanvas.off("text:changed", handleTextChanged);
+      fabricCanvas.off("text:editing:exited", handleTextEditingExited);
+      fabricCanvas.off("object:modified", handleObjectModified);
       fabricCanvas.off("mouse:down", handleMouseDown);
       fabricCanvas.off("mouse:move", handleMouseMove);
       fabricCanvas.off("mouse:up", handleMouseUp);
@@ -301,13 +412,10 @@ function useFabricCanvas({
     isApplyingRemote.current = true;
 
     try {
-      const object = deserializeObject(data.object);
-
-      if (!object) {
+      if (!upsertCanvasObject(canvas, data.object)) {
         return;
       }
 
-      canvas.add(object);
       syncCanvasToolMode(canvas);
       canvas.requestRenderAll();
     } finally {
@@ -326,6 +434,44 @@ function useFabricCanvas({
     try {
       clearCanvas(canvas);
       syncCanvasToolMode(canvas);
+    } finally {
+      isApplyingRemote.current = false;
+    }
+  };
+
+  const applyRemoteObjectUpdate = (data) => {
+    const canvas = fabricCanvasRef.current;
+    const objectId = data?.object?.objectId;
+
+    if (!canvas || !objectId) {
+      return;
+    }
+
+    isApplyingRemote.current = true;
+
+    try {
+      upsertCanvasObject(canvas, data.object);
+      syncCanvasToolMode(canvas);
+      canvas.requestRenderAll();
+    } finally {
+      isApplyingRemote.current = false;
+    }
+  };
+
+  const applyRemoteObjectDelete = (data) => {
+    const canvas = fabricCanvasRef.current;
+    const objectIds = data?.objectIds || [];
+
+    if (!canvas || !objectIds.length) {
+      return;
+    }
+
+    isApplyingRemote.current = true;
+
+    try {
+      deleteCanvasObjects(canvas, objectIds);
+      syncCanvasToolMode(canvas);
+      canvas.requestRenderAll();
     } finally {
       isApplyingRemote.current = false;
     }
@@ -365,11 +511,21 @@ function useFabricCanvas({
     activateCircleTool: () => setTool(WHITEBOARD_TOOLS.CIRCLE),
     activateLineTool: () => setTool(WHITEBOARD_TOOLS.LINE),
     activateTextTool: () => setTool(WHITEBOARD_TOOLS.TEXT),
-    enableDrawing: () => setTool(WHITEBOARD_TOOLS.PENCIL),
-    disableDrawing: () => setTool(activeToolRef.current),
-    toggleDrawing: () => setTool(activeToolRef.current),
     setBrushColor: (color) => {
       strokeColorRef.current = color;
+
+      const activeObject = fabricCanvasRef.current?.getActiveObject();
+
+      if (
+        activeToolRef.current === WHITEBOARD_TOOLS.TEXT &&
+        activeObject?.type === "textbox"
+      ) {
+        activeObject.set("fill", color);
+        activeObject.setCoords();
+        fabricCanvasRef.current?.requestRenderAll();
+        onObjectModifiedRef.current?.(serializeObject(activeObject));
+      }
+
       if (activeToolRef.current !== WHITEBOARD_TOOLS.ERASER) {
         setBrushColor(fabricCanvasRef.current, color);
       }
@@ -383,6 +539,8 @@ function useFabricCanvas({
       onClearRef.current?.();
     },
     addRemoteObject,
+    applyRemoteObjectUpdate,
+    applyRemoteObjectDelete,
     applyCanvasClear,
     loadWhiteboardState,
   };

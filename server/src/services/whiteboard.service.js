@@ -20,6 +20,36 @@ function addObjectToWhiteboard({ socket, roomId, object }) {
   });
 }
 
+function updateObjectInWhiteboard({ socket, roomId, object }) {
+  const room = roomsStore.findRoomById(roomId);
+  const identity = socket?.identity;
+
+  const storedObject = {
+    ...object,
+    creatorId: object?.creatorId ?? identity?.id,
+    creatorDisplayName: object?.creatorDisplayName ?? identity?.displayName,
+    creatorRole: object?.creatorRole ?? identity?.role,
+  };
+
+  return whiteboardsStore.updateObjectInWhiteboard({
+    roomId,
+    object: storedObject,
+    roomExists: Boolean(room),
+    socketJoinedRoom: Boolean(socket?.rooms?.has(roomId)),
+  });
+}
+
+function deleteObjectsFromWhiteboard({ socket, roomId, objectIds }) {
+  const room = roomsStore.findRoomById(roomId);
+
+  return whiteboardsStore.deleteObjectsFromWhiteboard({
+    roomId,
+    objectIds,
+    roomExists: Boolean(room),
+    socketJoinedRoom: Boolean(socket?.rooms?.has(roomId)),
+  });
+}
+
 function getWhiteboardState(roomId) {
   const room = roomsStore.findRoomById(roomId);
 
@@ -47,6 +77,8 @@ function createAppError(message) {
 
 module.exports = {
   addObjectToWhiteboard,
+  updateObjectInWhiteboard,
+  deleteObjectsFromWhiteboard,
   getWhiteboardState,
   clearWhiteboard,
 };

@@ -15,18 +15,20 @@ function ensureBrush(canvas) {
   }
 }
 
-function setObjectsInteractive(canvas, interactive) {
+function setObjectsInteractive(canvas, interactive, predicate = null) {
   for (const object of canvas.getObjects()) {
+    const isInteractive = interactive && (predicate ? predicate(object) : true);
+
     object.set({
-      selectable: interactive,
-      evented: interactive,
-      hasControls: interactive,
-      hasBorders: interactive,
-      lockMovementX: !interactive,
-      lockMovementY: !interactive,
-      lockRotation: true,
-      lockScalingX: !interactive,
-      lockScalingY: !interactive,
+      selectable: isInteractive,
+      evented: isInteractive,
+      hasControls: isInteractive,
+      hasBorders: isInteractive,
+      lockMovementX: !isInteractive,
+      lockMovementY: !isInteractive,
+      lockRotation: !isInteractive ? true : object.type !== "textbox",
+      lockScalingX: !isInteractive,
+      lockScalingY: !isInteractive,
     });
   }
 }
@@ -42,6 +44,12 @@ export function setCanvasTool(canvas, tool) {
       canvas.selection = false;
       canvas.discardActiveObject();
       setObjectsInteractive(canvas, false);
+      break;
+
+    case WHITEBOARD_TOOLS.TEXT:
+      canvas.isDrawingMode = false;
+      canvas.selection = false;
+      setObjectsInteractive(canvas, true, (object) => object.type === "textbox");
       break;
 
     default:

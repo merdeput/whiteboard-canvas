@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutSession } from "../api/auth.api";
@@ -15,7 +16,25 @@ function HomePage() {
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
   const hasSession = Boolean(user && token);
-  const bannerMessage = location.state?.banner || "";
+  const [dismissedBannerKeys, setDismissedBannerKeys] = useState([]);
+  const bannerMessage =
+    location.state?.banner && !dismissedBannerKeys.includes(location.key)
+      ? location.state.banner
+      : "";
+
+  useEffect(() => {
+    if (!bannerMessage) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setDismissedBannerKeys((currentKeys) => [...currentKeys, location.key]);
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [bannerMessage, location.key]);
 
   async function handleLogout() {
     try {
@@ -72,11 +91,7 @@ function HomePage() {
       <main className="home-main">
         <section className="home-hero">
           <p className="home-kicker">Collaboration-first workspace</p>
-          <h1>Jump into a room the way people join a live call.</h1>
-          <p className="home-copy">
-            Create a room if you are signed in, or open a room link and introduce
-            yourself before the canvas appears.
-          </p>
+          <h1>Jump in. Create. Connect.</h1>
         </section>
 
         <section className="home-actions">

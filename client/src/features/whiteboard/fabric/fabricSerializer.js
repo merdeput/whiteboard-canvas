@@ -152,9 +152,14 @@ export function deserializeObject(data) {
     return null;
   }
 
+  if (data?.objectId) {
+    if (typeof object.set === "function") {
+      object.set("objectId", data.objectId);
+    } else {
+      object.objectId = data.objectId;
+    }
+  }
+
   ensureObjectId(object);
   return object;
 }
-
-export const serializePath = serializeObject;
-export const deserializePath = deserializeObject;

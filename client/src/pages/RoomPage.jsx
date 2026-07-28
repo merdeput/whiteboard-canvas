@@ -25,17 +25,23 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
   const { connected, loading, error } = useSelector((state) => state.whiteboard);
 
   const sendObjectRef = useRef(() => {});
+  const sendObjectUpdateRef = useRef(() => {});
+  const sendObjectDeleteRef = useRef(() => {});
   const sendClearRef = useRef(() => {});
   const whiteboard = useFabricCanvas({
     onObjectCreated: (data) => sendObjectRef.current(data),
+    onObjectModified: (data) => sendObjectUpdateRef.current(data),
+    onObjectsDeleted: (data) => sendObjectDeleteRef.current(data),
     onClear: () => sendClearRef.current(),
   });
   
-  const { sendObject, sendClear } = useRoomSocket({
+  const { sendObject, sendObjectUpdate, sendObjectDelete, sendClear } = useRoomSocket({
     token,
     roomId,
     password: sessionPassword,
     onRemoteObject: whiteboard.tools.addRemoteObject,
+    onRemoteObjectUpdate: whiteboard.tools.applyRemoteObjectUpdate,
+    onRemoteObjectDelete: whiteboard.tools.applyRemoteObjectDelete,
     onRemoteClear: whiteboard.tools.applyCanvasClear,
     onWhiteboardState: whiteboard.tools.loadWhiteboardState,
     onSessionError,
@@ -43,8 +49,10 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
 
   useEffect(() => {
     sendObjectRef.current = sendObject;
+    sendObjectUpdateRef.current = sendObjectUpdate;
+    sendObjectDeleteRef.current = sendObjectDelete;
     sendClearRef.current = sendClear;
-  }, [sendObject, sendClear]);
+  }, [sendObject, sendObjectUpdate, sendObjectDelete, sendClear]);
 
   async function handleLogout() {
     try {
