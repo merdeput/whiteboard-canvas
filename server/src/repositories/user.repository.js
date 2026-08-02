@@ -1,15 +1,37 @@
-const usersStore = require("../stores/users.store");
+const User = require("../models/user.model");
 
-function create(user) {
-  return usersStore.createUser(user);
+function normalizeUser(user) {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    id: user._id,
+    username: user.username,
+    passwordHash: user.passwordHash,
+    createdAt:
+      user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
+  };
 }
 
-function findById(userId) {
-  return usersStore.findUserById(userId);
+async function create(user) {
+  const createdUser = await User.create({
+    _id: user.id,
+    username: user.username,
+    passwordHash: user.passwordHash,
+  });
+
+  return normalizeUser(createdUser);
 }
 
-function findByUsername(username) {
-  return usersStore.findUserByUsername(username);
+async function findById(userId) {
+  const user = await User.findById(userId).lean();
+  return normalizeUser(user);
+}
+
+async function findByUsername(username) {
+  const user = await User.findOne({ username }).lean();
+  return normalizeUser(user);
 }
 
 module.exports = {

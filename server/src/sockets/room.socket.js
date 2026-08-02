@@ -13,7 +13,7 @@ function registerRoomSocketHandlers(io, socket){
       });
 
       socket.join(room.id);
-      const roomWithParticipant = roomService.addParticipant({
+      const roomWithParticipant = await roomService.addParticipant({
         roomId: room.id,
         socketId: socket.id,
         identity: socket.identity,
@@ -25,7 +25,7 @@ function registerRoomSocketHandlers(io, socket){
       console.log(
         `[room] ${socket.identity.displayName} (${socket.identity.role}) joined ${room.id}`
       );
-      whiteboardController.emitWhiteboardState(socket, room.id);
+      await whiteboardController.emitWhiteboardState(socket, room.id);
     } catch (error) {
       socket.emit(socketEvents.ROOM_ERROR, {
         message: error.message || "Failed to join room",

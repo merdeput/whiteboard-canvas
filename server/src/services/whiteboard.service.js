@@ -1,7 +1,7 @@
 const { roomRepository, whiteboardRepository } = require("../repositories");
 
-function addObjectToWhiteboard({ socket, roomId, object }) {
-  const room = roomRepository.findById(roomId);
+async function addObjectToWhiteboard({ socket, roomId, object }) {
+  const room = await roomRepository.findById(roomId);
   const identity = socket?.identity;
 
   const storedObject = {
@@ -19,8 +19,8 @@ function addObjectToWhiteboard({ socket, roomId, object }) {
   });
 }
 
-function updateObjectInWhiteboard({ socket, roomId, object }) {
-  const room = roomRepository.findById(roomId);
+async function updateObjectInWhiteboard({ socket, roomId, object }) {
+  const room = await roomRepository.findById(roomId);
   const identity = socket?.identity;
 
   const storedObject = {
@@ -38,8 +38,8 @@ function updateObjectInWhiteboard({ socket, roomId, object }) {
   });
 }
 
-function deleteObjectsFromWhiteboard({ socket, roomId, objectIds }) {
-  const room = roomRepository.findById(roomId);
+async function deleteObjectsFromWhiteboard({ socket, roomId, objectIds }) {
+  const room = await roomRepository.findById(roomId);
 
   return whiteboardRepository.deleteObjects({
     roomId,
@@ -49,8 +49,8 @@ function deleteObjectsFromWhiteboard({ socket, roomId, objectIds }) {
   });
 }
 
-function getWhiteboardState(roomId) {
-  const room = roomRepository.findById(roomId);
+async function getWhiteboardState(roomId) {
+  const room = await roomRepository.findById(roomId);
 
   if (!room) {
     throw createAppError("Room not found");
@@ -59,8 +59,8 @@ function getWhiteboardState(roomId) {
   return whiteboardRepository.getState(roomId);
 }
 
-function clearWhiteboard({ socket, roomId }) {
-  const room = roomRepository.findById(roomId);
+async function clearWhiteboard({ socket, roomId }) {
+  const room = await roomRepository.findById(roomId);
 
   return whiteboardRepository.clear({
     roomId,

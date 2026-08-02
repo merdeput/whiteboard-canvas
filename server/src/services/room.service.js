@@ -20,7 +20,7 @@ async function createRoom({ ownerId, ownerRole, password }) {
 
   const now = new Date().toISOString();
 
-  const room = roomRepository.create({
+  const room = await roomRepository.create({
     id: generateId("room"),
     ownerId,
     passwordHash,
@@ -31,17 +31,17 @@ async function createRoom({ ownerId, ownerRole, password }) {
   });
 
   // Create an empty whiteboard now so later room join / board sync is easy.
-  whiteboardRepository.getOrCreate(room.id);
+  await whiteboardRepository.getOrCreate(room.id);
 
   return sanitizeRoom(room);
 }
 
-function getRoomMetadata(roomId) {
+async function getRoomMetadata(roomId) {
   if (!roomId) {
     throw createAppError(400, "Room ID is required");
   }
 
-  const room = roomRepository.findById(roomId);
+  const room = await roomRepository.findById(roomId);
   if (!room) {
     return {
       exists: false,
@@ -60,7 +60,7 @@ async function verifyRoomAccess({ roomId, password }) {
     throw createAppError(400, "Room ID is required");
   }
 
-  const room = roomRepository.findById(roomId);
+  const room = await roomRepository.findById(roomId);
   if (!room) {
     throw createAppError(404, "Room not found");
   }
@@ -85,7 +85,7 @@ async function verifyRoomAccess({ roomId, password }) {
   return room;
 }
 
-function addParticipant({ roomId, socketId, identity }) {
+async function addParticipant({ roomId, socketId, identity }) {
   if (!roomId) {
     throw createAppError(400, "Room ID is required");
   }
@@ -98,33 +98,31 @@ function addParticipant({ roomId, socketId, identity }) {
     throw createAppError(400, "Session identity is required");
   }
 
-  const room = roomRepository.findById(roomId);
+  const room = await roomRepository.findById(roomId);
   if (!room) {
     throw createAppError(404, "Room not found");
   }
 
-  roomRepository.addParticipant(roomId, {
+  return roomRepository.addParticipant(roomId, {
     socketId,
     id: identity.id,
     displayName: identity.displayName,
     role: identity.role,
   });
-
-  return room;
 }
 
-function handleSocketDisconnect(socketId) {
+async function handleSocketDisconnect(socketId) {
   if (!socketId) {
     return [];
   }
 
-  const affectedRooms = roomRepository.removeParticipantBySocketId(socketId);
+  const affectedRooms = await roomRepository.removeParticipantBySocketId(socketId);
   const deletedRoomIds = [];
 
   for (const room of affectedRooms) {
     if (room.participants.length === 0) {
-      roomRepository.removeById(room.id);
-      whiteboardRepository.removeByRoomId(room.id);
+      await roomRepository.removeById(room.id);
+      await whiteboardRepository.removeByRoomId(room.id);
       deletedRoomIds.push(room.id);
     }
   }

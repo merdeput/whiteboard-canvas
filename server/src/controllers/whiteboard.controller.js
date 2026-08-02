@@ -1,9 +1,9 @@
 const socketEvents = require("../constants/constants");
 const whiteboardService = require("../services/whiteboard.service");
 
-function handleDrawObject(socket, payload = {}) {
+async function handleDrawObject(socket, payload = {}) {
   const { roomId, object } = payload;
-  const storedObject = whiteboardService.addObjectToWhiteboard({
+  const storedObject = await whiteboardService.addObjectToWhiteboard({
     socket,
     roomId,
     object,
@@ -15,9 +15,9 @@ function handleDrawObject(socket, payload = {}) {
   });
 }
 
-function handleUpdateObject(socket, payload = {}) {
+async function handleUpdateObject(socket, payload = {}) {
   const { roomId, object } = payload;
-  const storedObject = whiteboardService.updateObjectInWhiteboard({
+  const storedObject = await whiteboardService.updateObjectInWhiteboard({
     socket,
     roomId,
     object,
@@ -29,9 +29,9 @@ function handleUpdateObject(socket, payload = {}) {
   });
 }
 
-function handleDeleteObjects(socket, payload = {}) {
+async function handleDeleteObjects(socket, payload = {}) {
   const { roomId, objectIds } = payload;
-  const deleted = whiteboardService.deleteObjectsFromWhiteboard({
+  const deleted = await whiteboardService.deleteObjectsFromWhiteboard({
     socket,
     roomId,
     objectIds,
@@ -40,10 +40,10 @@ function handleDeleteObjects(socket, payload = {}) {
   socket.to(roomId).emit(socketEvents.WHITEBOARD_OBJECTS_DELETED, deleted);
 }
 
-function handleClearWhiteboard(socket, payload = {}) {
+async function handleClearWhiteboard(socket, payload = {}) {
   const { roomId } = payload;
 
-  whiteboardService.clearWhiteboard({
+  await whiteboardService.clearWhiteboard({
     socket,
     roomId,
   });
@@ -53,8 +53,8 @@ function handleClearWhiteboard(socket, payload = {}) {
   });
 }
 
-function emitWhiteboardState(socket, roomId) {
-  const whiteboardState = whiteboardService.getWhiteboardState(roomId);
+async function emitWhiteboardState(socket, roomId) {
+  const whiteboardState = await whiteboardService.getWhiteboardState(roomId);
   socket.emit(socketEvents.WHITEBOARD_STATE, whiteboardState);
 }
 

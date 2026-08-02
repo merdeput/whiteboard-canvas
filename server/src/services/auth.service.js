@@ -13,14 +13,14 @@ async function register({ username, password }) {
     throw createAppError(400, "Username and password are required");
   }
 
-  const existingUser = userRepository.findByUsername(username);
+  const existingUser = await userRepository.findByUsername(username);
   if (existingUser) {
     throw createAppError(409, "Username already exists");
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const user = userRepository.create({
+  const user = await userRepository.create({
     id: generateId("user"),
     username,
     passwordHash,
@@ -44,7 +44,7 @@ async function login({ username, password }) {
     throw createAppError(400, "Username and password are required");
   }
 
-  const user = userRepository.findByUsername(username);
+  const user = await userRepository.findByUsername(username);
   if (!user) {
     throw createAppError(401, "Invalid username or password");
   }
