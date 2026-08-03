@@ -2,8 +2,10 @@ const registerSocketAuth = require("./auth.socket");
 const registerRoomSocketHandlers = require("./room.socket");
 const registerWhiteboardSocketHandlers = require("./whiteboard.socket");
 const roomService = require("../services/room.service");
+const { setSocketServer } = require("./socketGateway");
 
 function registerSocketServer(io) {
+  setSocketServer(io);
   registerSocketAuth(io);
 
   io.on("connection", (socket) => {

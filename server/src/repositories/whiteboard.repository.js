@@ -178,6 +178,40 @@ async function getState(roomId) {
   return getOrCreate(roomId);
 }
 
+async function replaceState({ roomId, objects, roomExists }) {
+  if (!roomId) {
+    throw new Error("Room ID is required");
+  }
+
+  if (!roomExists) {
+    throw new Error("Room not found");
+  }
+
+  if (!Array.isArray(objects)) {
+    throw new Error("Whiteboard objects array is required");
+  }
+
+  const whiteboard = await Whiteboard.findOneAndUpdate(
+    { roomId },
+    {
+      $setOnInsert: {
+        roomId,
+      },
+      $set: {
+        objects,
+      },
+    },
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+      lean: true,
+    }
+  );
+
+  return normalizeWhiteboard(whiteboard);
+}
+
 async function clear({ roomId, roomExists, socketJoinedRoom }) {
   validateRoomAccess({
     roomId,
@@ -213,5 +247,6 @@ module.exports = {
   updateObject,
   deleteObjects,
   getState,
+  replaceState,
   clear,
 };
