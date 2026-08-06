@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 function WhiteboardToolbar({ tools }) {
   const importInputRef = useRef(null);
+  const [exportFormat, setExportFormat] = useState("json");
 
   const handleImportButtonClick = () => {
     importInputRef.current?.click();
@@ -20,7 +21,8 @@ function WhiteboardToolbar({ tools }) {
       await tools.importJson?.(whiteboardImport);
     } catch (error) {
       window.alert(
-        error?.response?.data?.message ||
+        error?.response?.data?.error?.message ||
+          error?.response?.data?.message ||
           error?.message ||
           "Unable to import whiteboard JSON."
       );
@@ -31,12 +33,23 @@ function WhiteboardToolbar({ tools }) {
 
   const handleExportClick = async () => {
     try {
+      if (exportFormat === "png") {
+        await tools.exportPng?.();
+        return;
+      }
+
+      if (exportFormat === "svg") {
+        await tools.exportSvg?.();
+        return;
+      }
+
       await tools.exportJson?.();
     } catch (error) {
       window.alert(
-        error?.response?.data?.message ||
+        error?.response?.data?.error?.message ||
+          error?.response?.data?.message ||
           error?.message ||
-          "Unable to export whiteboard JSON."
+          "Unable to export whiteboard."
       );
     }
   };
@@ -111,13 +124,26 @@ function WhiteboardToolbar({ tools }) {
         />
       </label>
 
-      <button
-        type="button"
-        className="whiteboard-toolbar__button"
-        onClick={handleExportClick}
-      >
-        Export JSON
-      </button>
+      <div className="whiteboard-toolbar__export">
+        <select
+          className="whiteboard-toolbar__select"
+          value={exportFormat}
+          aria-label="Export format"
+          onChange={(event) => setExportFormat(event.target.value)}
+        >
+          <option value="json">JSON</option>
+          <option value="png">PNG</option>
+          <option value="svg">SVG</option>
+        </select>
+
+        <button
+          type="button"
+          className="whiteboard-toolbar__button"
+          onClick={handleExportClick}
+        >
+          Export
+        </button>
+      </div>
 
       <button
         type="button"

@@ -112,6 +112,29 @@
   border-style: dashed;
 }
 
+.whiteboard-toolbar__export {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.whiteboard-toolbar__select {
+  min-width: 96px;
+  padding: 9px 12px;
+  border: 2px solid var(--wb-border-strong);
+  border-radius: var(--wb-radius-sm);
+  background: #ffffff;
+  color: var(--wb-text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.whiteboard-toolbar__select:focus-visible {
+  outline: 2px solid var(--wb-accent);
+  outline-offset: 2px;
+}
+
 .whiteboard-toolbar__control {
   display: flex;
   align-items: center;
@@ -190,8 +213,14 @@
   }
 
   .whiteboard-toolbar__button,
-  .whiteboard-toolbar__control {
+  .whiteboard-toolbar__control,
+  .whiteboard-toolbar__export {
     width: 100%;
+  }
+
+  .whiteboard-toolbar__export {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .whiteboard-toolbar__control input[type="range"] {

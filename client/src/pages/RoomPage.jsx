@@ -55,20 +55,67 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
     sendClearRef.current = sendClear;
   }, [sendObject, sendObjectUpdate, sendObjectDelete, sendClear]);
 
-  async function handleExportJson() {
-    const whiteboardExport = await exportWhiteboardJson(roomId, sessionPassword);
-    const blob = new Blob([JSON.stringify(whiteboardExport, null, 2)], {
-      type: "application/json",
-    });
+  function downloadFile({ content, filename, type }) {
+    const blob = content instanceof Blob ? content : new Blob([content], { type });
     const downloadUrl = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
 
     anchor.href = downloadUrl;
-    anchor.download = `whiteboard-${roomId}.json`;
+    anchor.download = filename;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(downloadUrl);
+  }
+
+  async function handleExportJson() {
+    const whiteboardExport = await exportWhiteboardJson(roomId, sessionPassword);
+    downloadFile({
+      content: JSON.stringify(whiteboardExport, null, 2),
+      filename: `whiteboard-${roomId}.json`,
+      type: "application/json",
+    });
+  }
+
+  async function handleExportPng() {
+    const canvas = whiteboard.fabricCanvasRef.current;
+
+    if (!canvas) {
+      throw new Error("Whiteboard canvas is not ready.");
+    }
+
+    canvas.discardActiveObject();
+    canvas.requestRenderAll();
+
+    const pngDataUrl = canvas.toDataURL({
+      format: "png",
+      multiplier: 1,
+      enableRetinaScaling: true,
+    });
+    const pngResponse = await fetch(pngDataUrl);
+
+    downloadFile({
+      content: await pngResponse.blob(),
+      filename: `whiteboard-${roomId}.png`,
+      type: "image/png",
+    });
+  }
+
+  async function handleExportSvg() {
+    const canvas = whiteboard.fabricCanvasRef.current;
+
+    if (!canvas) {
+      throw new Error("Whiteboard canvas is not ready.");
+    }
+
+    canvas.discardActiveObject();
+    canvas.requestRenderAll();
+
+    downloadFile({
+      content: canvas.toSVG(),
+      filename: `whiteboard-${roomId}.svg`,
+      type: "image/svg+xml",
+    });
   }
 
   async function handleImportJson(whiteboardImport) {
@@ -122,6 +169,8 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
           tools={{
             ...whiteboard.tools,
             exportJson: handleExportJson,
+            exportPng: handleExportPng,
+            exportSvg: handleExportSvg,
             importJson: handleImportJson,
           }}
         />
