@@ -1,4 +1,46 @@
+import { useRef } from "react";
+
 function WhiteboardToolbar({ tools }) {
+  const importInputRef = useRef(null);
+
+  const handleImportButtonClick = () => {
+    importInputRef.current?.click();
+  };
+
+  const handleImportChange = async (event) => {
+    const [file] = event.target.files || [];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const fileContent = await file.text();
+      const whiteboardImport = JSON.parse(fileContent);
+      await tools.importJson?.(whiteboardImport);
+    } catch (error) {
+      window.alert(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to import whiteboard JSON."
+      );
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  const handleExportClick = async () => {
+    try {
+      await tools.exportJson?.();
+    } catch (error) {
+      window.alert(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to export whiteboard JSON."
+      );
+    }
+  };
+
   return (
     <div className="whiteboard-toolbar" aria-label="Whiteboard toolbar">
       <button
@@ -68,6 +110,30 @@ function WhiteboardToolbar({ tools }) {
           onChange={(e) => tools.setBrushWidth(Number(e.target.value))}
         />
       </label>
+
+      <button
+        type="button"
+        className="whiteboard-toolbar__button"
+        onClick={handleExportClick}
+      >
+        Export JSON
+      </button>
+
+      <button
+        type="button"
+        className="whiteboard-toolbar__button"
+        onClick={handleImportButtonClick}
+      >
+        Import JSON
+      </button>
+
+      <input
+        ref={importInputRef}
+        type="file"
+        accept="application/json,.json"
+        hidden
+        onChange={handleImportChange}
+      />
 
       <button
         type="button"

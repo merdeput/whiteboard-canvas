@@ -2,10 +2,10 @@ const socketEvents = require("../constants/constants");
 const whiteboardController = require("../controllers/whiteboard.controller");
 
 function registerWhiteboardSocketHandlers(io, socket){
-  socket.on(socketEvents.WHITEBOARD_DRAW_OBJECT, (payload = {}) => {
+  socket.on(socketEvents.WHITEBOARD_DRAW_OBJECT, async (payload = {}) => {
     try {
       const { roomId } = payload;
-      whiteboardController.handleDrawObject(socket, payload);
+      await whiteboardController.handleDrawObject(socket, payload);
       console.log(
         `[draw-object] ${socket.identity.displayName} (${socket.identity.role}) -> ${roomId}`
       );
@@ -16,10 +16,10 @@ function registerWhiteboardSocketHandlers(io, socket){
     }
   });
 
-  socket.on(socketEvents.WHITEBOARD_UPDATE_OBJECT, (payload = {}) => {
+  socket.on(socketEvents.WHITEBOARD_UPDATE_OBJECT, async (payload = {}) => {
     try {
       const { roomId } = payload;
-      whiteboardController.handleUpdateObject(socket, payload);
+      await whiteboardController.handleUpdateObject(socket, payload);
       console.log(
         `[update-object] ${socket.identity.displayName} (${socket.identity.role}) -> ${roomId}`
       );
@@ -30,10 +30,10 @@ function registerWhiteboardSocketHandlers(io, socket){
     }
   });
 
-  socket.on(socketEvents.WHITEBOARD_DELETE_OBJECTS, (payload = {}) => {
+  socket.on(socketEvents.WHITEBOARD_DELETE_OBJECTS, async (payload = {}) => {
     try {
       const { roomId } = payload;
-      whiteboardController.handleDeleteObjects(socket, payload);
+      await whiteboardController.handleDeleteObjects(socket, payload);
       console.log(
         `[delete-objects] ${socket.identity.displayName} (${socket.identity.role}) -> ${roomId}`
       );
@@ -44,10 +44,10 @@ function registerWhiteboardSocketHandlers(io, socket){
     }
   });
 
-  socket.on(socketEvents.WHITEBOARD_CLEAR, (payload = {}) => {
+  socket.on(socketEvents.WHITEBOARD_CLEAR, async (payload = {}) => {
     try {
       const { roomId } = payload;
-      whiteboardController.handleClearWhiteboard(socket, payload);
+      await whiteboardController.handleClearWhiteboard(socket, payload);
       console.log(
         `[clear] ${socket.identity.displayName} (${socket.identity.role}) -> ${roomId}`
       );

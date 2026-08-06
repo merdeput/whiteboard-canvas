@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const { generateId, signAccessToken } = require("../utils/utils");
-const usersStore = require("../stores/users.store");
+const { userRepository } = require("../repositories");
 const {
   createGuestIdentity,
   createMemberIdentity,
@@ -13,14 +13,14 @@ async function register({ username, password }) {
     throw createAppError(400, "Username and password are required");
   }
 
-  const existingUser = usersStore.findUserByUsername(username);
+  const existingUser = await userRepository.findByUsername(username);
   if (existingUser) {
     throw createAppError(409, "Username already exists");
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const user = usersStore.createUser({
+  const user = await userRepository.create({
     id: generateId("user"),
     username,
     passwordHash,
@@ -44,7 +44,7 @@ async function login({ username, password }) {
     throw createAppError(400, "Username and password are required");
   }
 
-  const user = usersStore.findUserByUsername(username);
+  const user = await userRepository.findByUsername(username);
   if (!user) {
     throw createAppError(401, "Invalid username or password");
   }

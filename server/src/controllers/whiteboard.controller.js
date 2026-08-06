@@ -1,9 +1,10 @@
 const socketEvents = require("../constants/constants");
 const whiteboardService = require("../services/whiteboard.service");
+const { emitToRoom } = require("../sockets/socketGateway");
 
-function handleDrawObject(socket, payload = {}) {
+async function handleDrawObject(socket, payload = {}) {
   const { roomId, object } = payload;
-  const storedObject = whiteboardService.addObjectToWhiteboard({
+  const storedObject = await whiteboardService.addObjectToWhiteboard({
     socket,
     roomId,
     object,
@@ -15,9 +16,9 @@ function handleDrawObject(socket, payload = {}) {
   });
 }
 
-function handleUpdateObject(socket, payload = {}) {
+async function handleUpdateObject(socket, payload = {}) {
   const { roomId, object } = payload;
-  const storedObject = whiteboardService.updateObjectInWhiteboard({
+  const storedObject = await whiteboardService.updateObjectInWhiteboard({
     socket,
     roomId,
     object,
@@ -29,9 +30,9 @@ function handleUpdateObject(socket, payload = {}) {
   });
 }
 
-function handleDeleteObjects(socket, payload = {}) {
+async function handleDeleteObjects(socket, payload = {}) {
   const { roomId, objectIds } = payload;
-  const deleted = whiteboardService.deleteObjectsFromWhiteboard({
+  const deleted = await whiteboardService.deleteObjectsFromWhiteboard({
     socket,
     roomId,
     objectIds,
@@ -40,10 +41,10 @@ function handleDeleteObjects(socket, payload = {}) {
   socket.to(roomId).emit(socketEvents.WHITEBOARD_OBJECTS_DELETED, deleted);
 }
 
-function handleClearWhiteboard(socket, payload = {}) {
+async function handleClearWhiteboard(socket, payload = {}) {
   const { roomId } = payload;
 
-  whiteboardService.clearWhiteboard({
+  await whiteboardService.clearWhiteboard({
     socket,
     roomId,
   });
@@ -53,9 +54,38 @@ function handleClearWhiteboard(socket, payload = {}) {
   });
 }
 
-function emitWhiteboardState(socket, roomId) {
-  const whiteboardState = whiteboardService.getWhiteboardState(roomId);
+async function emitWhiteboardState(socket, roomId) {
+  const whiteboardState = await whiteboardService.getWhiteboardState(roomId);
   socket.emit(socketEvents.WHITEBOARD_STATE, whiteboardState);
+}
+
+async function exportWhiteboard(req, res, next) {
+  try {
+    const whiteboardExport = await whiteboardService.exportWhiteboard({
+      roomId: req.params.roomId,
+      password: req.body?.password,
+    });
+
+    return res.status(200).json(whiteboardExport);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function importWhiteboard(req, res, next) {
+  try {
+    const whiteboardState = await whiteboardService.importWhiteboard({
+      roomId: req.params.roomId,
+      password: req.body?.password,
+      whiteboardImport: req.body?.whiteboardImport,
+    });
+
+    emitToRoom(req.params.roomId, socketEvents.WHITEBOARD_STATE, whiteboardState);
+
+    return res.status(200).json(whiteboardState);
+  } catch (error) {
+    next(error);
+  }
 }
 
 module.exports = {
@@ -64,4 +94,6 @@ module.exports = {
   handleDeleteObjects,
   handleClearWhiteboard,
   emitWhiteboardState,
+  exportWhiteboard,
+  importWhiteboard,
 };

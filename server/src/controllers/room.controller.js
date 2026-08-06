@@ -14,9 +14,9 @@ async function createRoom(req, res, next) {
   }
 }
 
-function getRoomMetadata(req, res, next) {
+async function getRoomMetadata(req, res, next) {
   try {
-    const metadata = roomService.getRoomMetadata(req.params.roomId);
+    const metadata = await roomService.getRoomMetadata(req.params.roomId);
 
     if (!metadata.exists) {
       return res.status(404).json(metadata);

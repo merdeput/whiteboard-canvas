@@ -2,8 +2,10 @@ const registerSocketAuth = require("./auth.socket");
 const registerRoomSocketHandlers = require("./room.socket");
 const registerWhiteboardSocketHandlers = require("./whiteboard.socket");
 const roomService = require("../services/room.service");
+const { setSocketServer } = require("./socketGateway");
 
 function registerSocketServer(io) {
+  setSocketServer(io);
   registerSocketAuth(io);
 
   io.on("connection", (socket) => {
@@ -14,8 +16,8 @@ function registerSocketServer(io) {
     registerRoomSocketHandlers(io, socket);
     registerWhiteboardSocketHandlers(io, socket);
 
-    socket.on("disconnect", () => {
-      const deletedRoomIds = roomService.handleSocketDisconnect(socket.id);
+    socket.on("disconnect", async () => {
+      const deletedRoomIds = await roomService.handleSocketDisconnect(socket.id);
       console.log(`[socket] disconnected: ${socket.id}`);
 
       if (deletedRoomIds.length) {

@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef } from "react";
 import { logoutSession } from "../api/auth.api";
+import { exportWhiteboardJson, importWhiteboardJson } from "../api/room.api";
 import { logout } from "../features/auth/authSlice";
 import RoomHeader from "../features/room/components/RoomHeader";
 import WhiteboardStatus from "../features/whiteboard/components/WhiteboardStatus";
@@ -54,6 +55,27 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
     sendClearRef.current = sendClear;
   }, [sendObject, sendObjectUpdate, sendObjectDelete, sendClear]);
 
+  async function handleExportJson() {
+    const whiteboardExport = await exportWhiteboardJson(roomId, sessionPassword);
+    const blob = new Blob([JSON.stringify(whiteboardExport, null, 2)], {
+      type: "application/json",
+    });
+    const downloadUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = downloadUrl;
+    anchor.download = `whiteboard-${roomId}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(downloadUrl);
+  }
+
+  async function handleImportJson(whiteboardImport) {
+    const whiteboardState = await importWhiteboardJson(roomId, sessionPassword, whiteboardImport);
+    whiteboard.tools.loadWhiteboardState(whiteboardState);
+  }
+
   async function handleLogout() {
     try {
       await logoutSession();
@@ -96,7 +118,13 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
 
       <main className="room-content">
         <WhiteboardStatus />
-        <WhiteboardToolbar tools={whiteboard.tools} />
+        <WhiteboardToolbar
+          tools={{
+            ...whiteboard.tools,
+            exportJson: handleExportJson,
+            importJson: handleImportJson,
+          }}
+        />
         <WhiteboardCanvas
           containerRef={whiteboard.containerRef}
           canvasRef={whiteboard.canvasRef}
