@@ -1,0 +1,51 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand({ ping: 1 }).ok\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      CLIENT_ORIGIN: http://localhost:${CLIENT_HOST_PORT:-8080}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in a root .env file before running Docker Compose}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      MONGODB_URI: mongodb://mongodb:27017/${MONGO_DATABASE:-whiteboard_canvas}
+    ports:
+      - "${SERVER_HOST_PORT:-3001}:3001"
+
+  client:
+    build:
+      context: ./client
+      args:
+        VITE_API_URL: http://localhost:${SERVER_HOST_PORT:-3001}/api
+        VITE_SERVER_URL: http://localhost:${SERVER_HOST_PORT:-3001}
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    ports:
+      - "${CLIENT_HOST_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /usr/share/nginx/html/index.html"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  mongodb_data:
