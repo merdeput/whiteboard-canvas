@@ -5,7 +5,12 @@ dotenv.config();
 function parseClientOrigins(value) {
   return (value || "http://localhost:5173")
     .split(",")
-    .map((origin) => origin.trim())
+    .map((origin) =>
+      origin
+        .trim()
+        .replace(/^['"]|['"]$/g, "")
+        .replace(/\/+$/g, "")
+    )
     .filter(Boolean);
 }
 
