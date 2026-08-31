@@ -6,10 +6,10 @@ services:
       - mongodb_data:/data/db
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand({ ping: 1 }).ok\""]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   server:
     build:
@@ -42,10 +42,10 @@ services:
       - "${CLIENT_HOST_PORT:-8080}:80"
     healthcheck:
       test: ["CMD-SHELL", "test -f /usr/share/nginx/html/index.html"]
-      interval: 30s
+      interval: 5s
       timeout: 3s
-      retries: 3
-      start_period: 5s
+      retries: 5
+      start_period: 2s
 
 volumes:
   mongodb_data:

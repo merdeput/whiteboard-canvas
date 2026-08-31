@@ -33,8 +33,32 @@ function setObjectsInteractive(canvas, interactive, predicate = null) {
   }
 }
 
+function setToolCursor(canvas, tool) {
+  let cursor = "default";
+
+  if (tool === WHITEBOARD_TOOLS.TEXT) {
+    cursor = "text";
+  } else if (tool === WHITEBOARD_TOOLS.ERASER) {
+    cursor = "cell";
+  } else if (
+    tool === WHITEBOARD_TOOLS.PENCIL ||
+    tool === WHITEBOARD_TOOLS.RECTANGLE ||
+    tool === WHITEBOARD_TOOLS.CIRCLE ||
+    tool === WHITEBOARD_TOOLS.LINE
+  ) {
+    cursor = "crosshair";
+  }
+
+  canvas.defaultCursor = cursor;
+  canvas.hoverCursor = cursor;
+  canvas.freeDrawingCursor = cursor;
+  canvas.setCursor(cursor);
+}
+
 export function setCanvasTool(canvas, tool) {
   if (!canvas) return;
+
+  setToolCursor(canvas, tool);
 
   switch (tool) {
     case WHITEBOARD_TOOLS.PENCIL:

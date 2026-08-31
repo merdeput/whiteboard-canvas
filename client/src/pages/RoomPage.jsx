@@ -5,7 +5,6 @@ import { logoutSession } from "../api/auth.api";
 import { exportWhiteboardJson, importWhiteboardJson } from "../api/room.api";
 import { logout } from "../features/auth/authSlice";
 import RoomHeader from "../features/room/components/RoomHeader";
-import WhiteboardStatus from "../features/whiteboard/components/WhiteboardStatus";
 import WhiteboardToolbar from "../features/whiteboard/components/WhiteboardToolbar";
 import WhiteboardCanvas from "../features/whiteboard/components/WhiteboardCanvas";
 import useFabricCanvas from "../hooks/useFabricCanvas";
@@ -23,7 +22,6 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.auth.user);
   const currentRoom = useSelector((state) => state.room.currentRoom);
-  const { connected, loading, error } = useSelector((state) => state.whiteboard);
 
   const sendObjectRef = useRef(() => {});
   const sendObjectUpdateRef = useRef(() => {});
@@ -141,16 +139,6 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
     }
   }
 
-  let connectionStatus = "Disconnected";
-
-  if (error) {
-    connectionStatus = `Error: ${error}`;
-  } else if (loading) {
-    connectionStatus = "Loading...";
-  } else if (connected) {
-    connectionStatus = "Connected";
-  }
-
   const roomName = currentRoom?.id || `Room ${roomId}`;
 
   return (
@@ -158,13 +146,11 @@ function RoomPage({ sessionPassword = "", onSessionError }) {
       <RoomHeader
         roomName={roomName}
         roomId={roomId}
-        connectionStatus={connectionStatus}
         sessionLabel={user?.displayName || null}
         onLogout={handleLogout}
       />
 
       <main className="room-content">
-        <WhiteboardStatus />
         <WhiteboardToolbar
           tools={{
             ...whiteboard.tools,
