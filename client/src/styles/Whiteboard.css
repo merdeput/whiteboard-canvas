@@ -146,6 +146,7 @@
 }
 
 .whiteboard-toolbar__icon-button:focus-visible,
+.whiteboard-toolbar__zoom-value:focus-visible,
 .whiteboard-toolbar__menu-panel button:focus-visible,
 .whiteboard-toolbar__color-control:focus-within,
 .whiteboard-toolbar__width-control:focus-within {
@@ -156,6 +157,28 @@
 .whiteboard-toolbar__icon-button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.whiteboard-toolbar__zoom-value {
+  width: 54px;
+  height: 40px;
+  flex: 0 0 54px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--wb-radius-sm);
+  background: transparent;
+  color: var(--wb-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--wb-transition), border-color var(--wb-transition), color var(--wb-transition);
+}
+
+.whiteboard-toolbar__zoom-value:hover {
+  background: #f5f6f8;
+  border-color: var(--wb-border-strong);
+  color: var(--wb-text);
 }
 
 .whiteboard-toolbar__formatting {

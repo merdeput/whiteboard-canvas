@@ -6,6 +6,7 @@ import {
   FileCode2,
   FileJson,
   ImageDown,
+  Maximize2,
   Minus,
   Pencil,
   RectangleHorizontal,
@@ -15,6 +16,8 @@ import {
   Type,
   Undo2,
   Upload,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { WHITEBOARD_TOOLS } from "../fabric/fabricTools";
 import WhiteboardStatus from "./WhiteboardStatus";
@@ -206,6 +209,47 @@ function WhiteboardToolbar({ tools }) {
               onChange={(event) => tools.setBrushWidth(Number(event.target.value))}
             />
           </label>
+        </div>
+
+        <div className="whiteboard-toolbar__group" role="group" aria-label="Zoom and navigation">
+          <button
+            type="button"
+            className="whiteboard-toolbar__icon-button"
+            aria-label="Zoom out"
+            title="Zoom out"
+            disabled={!tools.canZoomOut}
+            onClick={tools.zoomOut}
+          >
+            <ZoomOut aria-hidden="true" size={20} strokeWidth={2} />
+          </button>
+          <button
+            type="button"
+            className="whiteboard-toolbar__zoom-value"
+            aria-label={`Zoom ${tools.zoomPercentage} percent. Reset view`}
+            title="Reset view"
+            onClick={tools.resetView}
+          >
+            {tools.zoomPercentage}%
+          </button>
+          <button
+            type="button"
+            className="whiteboard-toolbar__icon-button"
+            aria-label="Zoom in"
+            title="Zoom in"
+            disabled={!tools.canZoomIn}
+            onClick={tools.zoomIn}
+          >
+            <ZoomIn aria-hidden="true" size={20} strokeWidth={2} />
+          </button>
+          <button
+            type="button"
+            className="whiteboard-toolbar__icon-button"
+            aria-label="Fit board to content"
+            title="Fit board to content"
+            onClick={tools.fitToContent}
+          >
+            <Maximize2 aria-hidden="true" size={20} strokeWidth={2} />
+          </button>
         </div>
 
         {showHistory ? (

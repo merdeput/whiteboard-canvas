@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Circle, Line, Rect, Textbox } from "fabric";
+import { Circle, Line, Point, Rect, Textbox } from "fabric";
 import createCanvas from "../features/whiteboard/fabric/createCanvas";
 import resizeCanvas from "../features/whiteboard/fabric/resizeCanvas";
 import {
@@ -15,6 +15,14 @@ import {
   clearCanvas,
 } from "../features/whiteboard/fabric/fabricTools";
 
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 0.25;
+
+function clampZoom(zoom) {
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+}
+
 function useFabricCanvas({
   onObjectCreated,
   onObjectModified,
@@ -22,6 +30,7 @@ function useFabricCanvas({
   onClear,
 } = {}) {
   const [activeTool, setActiveTool] = useState(WHITEBOARD_TOOLS.PENCIL);
+  const [zoomPercentage, setZoomPercentage] = useState(100);
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const fabricCanvasRef = useRef(null);
@@ -29,6 +38,9 @@ function useFabricCanvas({
   const shapeDraftRef = useRef(null);
   const strokeColorRef = useRef("#000000");
   const strokeWidthRef = useRef(3);
+  const isSpacePressedRef = useRef(false);
+  const isPanningRef = useRef(false);
+  const lastPanPointRef = useRef(null);
   const isApplyingRemote = useRef(false);
   const onObjectCreatedRef = useRef(onObjectCreated);
   const onObjectModifiedRef = useRef(onObjectModified);
@@ -68,8 +80,59 @@ function useFabricCanvas({
     applyTool(fabricCanvasRef.current, tool);
   }, [applyTool]);
 
+  const setCanvasZoom = useCallback((canvas, zoom, point = null) => {
+    if (!canvas) {
+      return;
+    }
+
+    const nextZoom = clampZoom(zoom);
+    const zoomPoint = point || new Point(canvas.width / 2, canvas.height / 2);
+    canvas.zoomToPoint(zoomPoint, nextZoom);
+    setZoomPercentage(Math.round(nextZoom * 100));
+  }, []);
+
+  const resetView = useCallback(() => {
+    const canvas = fabricCanvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    setZoomPercentage(100);
+  }, []);
+
+  const fitToContent = useCallback(() => {
+    const canvas = fabricCanvasRef.current;
+    const objects = canvas?.getObjects() || [];
+
+    if (!canvas || !objects.length) {
+      resetView();
+      return;
+    }
+
+    const bounds = objects.map((object) => object.getBoundingRect());
+    const minX = Math.min(...bounds.map((bound) => bound.left));
+    const minY = Math.min(...bounds.map((bound) => bound.top));
+    const maxX = Math.max(...bounds.map((bound) => bound.left + bound.width));
+    const maxY = Math.max(...bounds.map((bound) => bound.top + bound.height));
+    const contentWidth = Math.max(maxX - minX, 1);
+    const contentHeight = Math.max(maxY - minY, 1);
+    const padding = 48;
+    const availableWidth = Math.max(canvas.width - padding * 2, 1);
+    const availableHeight = Math.max(canvas.height - padding * 2, 1);
+    const zoom = clampZoom(
+      Math.min(availableWidth / contentWidth, availableHeight / contentHeight)
+    );
+    const offsetX = (canvas.width - contentWidth * zoom) / 2 - minX * zoom;
+    const offsetY = (canvas.height - contentHeight * zoom) / 2 - minY * zoom;
+
+    canvas.setViewportTransform([zoom, 0, 0, zoom, offsetX, offsetY]);
+    setZoomPercentage(Math.round(zoom * 100));
+  }, [resetView]);
+
   const getPointerPosition = (canvas, event) => {
-    const pointer = canvas.getViewportPoint(event.e);
+    const pointer = canvas.getScenePoint(event.e);
     return pointer;
   };
 
@@ -99,6 +162,10 @@ function useFabricCanvas({
 
   const syncCanvasToolMode = (canvas) => {
     setCanvasTool(canvas, activeToolRef.current);
+
+    if (isSpacePressedRef.current) {
+      canvas.setCursor(isPanningRef.current ? "grabbing" : "grab");
+    }
   };
 
   const upsertCanvasObject = (canvas, objectData) => {
@@ -202,24 +269,50 @@ function useFabricCanvas({
       onObjectModifiedRef.current?.(serializeObject(e.target));
     };
 
+    const isEditableTarget = (target) => {
+      const targetTagName = target?.tagName;
+
+      return (
+        target?.isContentEditable ||
+        targetTagName === "INPUT" ||
+        targetTagName === "TEXTAREA" ||
+        targetTagName === "SELECT" ||
+        targetTagName === "BUTTON" ||
+        targetTagName === "A"
+      );
+    };
+
+    const restoreToolAfterPanning = () => {
+      isPanningRef.current = false;
+      lastPanPointRef.current = null;
+      syncCanvasToolMode(fabricCanvas);
+    };
+
     const handleKeyDown = (event) => {
+      const activeObject = fabricCanvas.getActiveObject();
+
+      if (
+        event.code === "Space" &&
+        !event.repeat &&
+        !isEditableTarget(event.target) &&
+        !activeObject?.isEditing
+      ) {
+        isSpacePressedRef.current = true;
+        fabricCanvas.isDrawingMode = false;
+        fabricCanvas.setCursor("grab");
+        event.preventDefault();
+        return;
+      }
+
       if (activeToolRef.current !== WHITEBOARD_TOOLS.TEXT) {
         return;
       }
 
       const isDeleteKey = event.key === "Delete" || event.key === "Backspace";
-      const targetTagName = event.target?.tagName;
-      const isEditableTarget =
-        event.target?.isContentEditable ||
-        targetTagName === "INPUT" ||
-        targetTagName === "TEXTAREA" ||
-        targetTagName === "SELECT";
 
-      if (!isDeleteKey || isEditableTarget) {
+      if (!isDeleteKey || isEditableTarget(event.target)) {
         return;
       }
-
-      const activeObject = fabricCanvas.getActiveObject();
 
       if (!activeObject?.objectId || activeObject.isEditing || activeObject.type !== "textbox") {
         return;
@@ -235,7 +328,45 @@ function useFabricCanvas({
       onObjectsDeletedRef.current?.(deletedObjectIds);
     };
 
+    const handleKeyUp = (event) => {
+      if (event.code !== "Space" || !isSpacePressedRef.current) {
+        return;
+      }
+
+      isSpacePressedRef.current = false;
+
+      if (!isPanningRef.current) {
+        restoreToolAfterPanning();
+      }
+    };
+
+    const handleWindowBlur = () => {
+      isSpacePressedRef.current = false;
+      restoreToolAfterPanning();
+    };
+
+    const handleMouseWheel = (event) => {
+      const delta = event.e.deltaY;
+      const nextZoom = fabricCanvas.getZoom() * Math.pow(0.999, delta);
+      const zoomPoint = fabricCanvas.getViewportPoint(event.e);
+
+      setCanvasZoom(fabricCanvas, nextZoom, zoomPoint);
+      event.e.preventDefault();
+      event.e.stopPropagation();
+    };
+
     const handleMouseDown = (event) => {
+      if (isSpacePressedRef.current) {
+        isPanningRef.current = true;
+        lastPanPointRef.current = {
+          x: event.e.clientX,
+          y: event.e.clientY,
+        };
+        fabricCanvas.setCursor("grabbing");
+        event.e.preventDefault();
+        return;
+      }
+
       const tool = activeToolRef.current;
       if (
         tool === WHITEBOARD_TOOLS.TEXT &&
@@ -338,6 +469,20 @@ function useFabricCanvas({
     };
 
     const handleMouseMove = (event) => {
+      if (isPanningRef.current && lastPanPointRef.current) {
+        const viewportTransform = [...fabricCanvas.viewportTransform];
+        const nextPoint = {
+          x: event.e.clientX,
+          y: event.e.clientY,
+        };
+
+        viewportTransform[4] += nextPoint.x - lastPanPointRef.current.x;
+        viewportTransform[5] += nextPoint.y - lastPanPointRef.current.y;
+        lastPanPointRef.current = nextPoint;
+        fabricCanvas.setViewportTransform(viewportTransform);
+        return;
+      }
+
       const draft = shapeDraftRef.current;
 
       if (!draft) {
@@ -350,6 +495,18 @@ function useFabricCanvas({
     };
 
     const handleMouseUp = (event) => {
+      if (isPanningRef.current) {
+        isPanningRef.current = false;
+        lastPanPointRef.current = null;
+        fabricCanvas.setCursor(isSpacePressedRef.current ? "grab" : "default");
+
+        if (!isSpacePressedRef.current) {
+          syncCanvasToolMode(fabricCanvas);
+        }
+
+        return;
+      }
+
       const draft = shapeDraftRef.current;
 
       if (!draft) {
@@ -382,26 +539,32 @@ function useFabricCanvas({
     fabricCanvas.on("text:changed", handleTextChanged);
     fabricCanvas.on("text:editing:exited", handleTextEditingExited);
     fabricCanvas.on("object:modified", handleObjectModified);
+    fabricCanvas.on("mouse:wheel", handleMouseWheel);
     fabricCanvas.on("mouse:down", handleMouseDown);
     fabricCanvas.on("mouse:move", handleMouseMove);
     fabricCanvas.on("mouse:up", handleMouseUp);
     window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleWindowBlur);
 
     return () => {
       resizeObserver?.disconnect();
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleWindowBlur);
       fabricCanvas.off("path:created", handlePathCreated);
       fabricCanvas.off("text:changed", handleTextChanged);
       fabricCanvas.off("text:editing:exited", handleTextEditingExited);
       fabricCanvas.off("object:modified", handleObjectModified);
+      fabricCanvas.off("mouse:wheel", handleMouseWheel);
       fabricCanvas.off("mouse:down", handleMouseDown);
       fabricCanvas.off("mouse:move", handleMouseMove);
       fabricCanvas.off("mouse:up", handleMouseUp);
       fabricCanvas.dispose();
       fabricCanvasRef.current = null;
     };
-  }, [applyTool, setTool]);
+  }, [applyTool, setCanvasZoom, setTool]);
 
   const addRemoteObject = (data) => {
     const canvas = fabricCanvasRef.current;
@@ -505,6 +668,9 @@ function useFabricCanvas({
 
   const tools = {
     activeTool,
+    zoomPercentage,
+    canZoomOut: zoomPercentage > MIN_ZOOM * 100,
+    canZoomIn: zoomPercentage < MAX_ZOOM * 100,
     activateDrawingTool: () => setTool(WHITEBOARD_TOOLS.PENCIL),
     activateEraserTool: () => setTool(WHITEBOARD_TOOLS.ERASER),
     activateRectangleTool: () => setTool(WHITEBOARD_TOOLS.RECTANGLE),
@@ -534,6 +700,16 @@ function useFabricCanvas({
       strokeWidthRef.current = Number(width);
       setBrushWidth(fabricCanvasRef.current, width);
     },
+    zoomOut: () => {
+      const canvas = fabricCanvasRef.current;
+      setCanvasZoom(canvas, (canvas?.getZoom() || 1) - ZOOM_STEP);
+    },
+    zoomIn: () => {
+      const canvas = fabricCanvasRef.current;
+      setCanvasZoom(canvas, (canvas?.getZoom() || 1) + ZOOM_STEP);
+    },
+    resetView,
+    fitToContent,
     clearCanvas: () => {
       clearCanvas(fabricCanvasRef.current);
       onClearRef.current?.();
